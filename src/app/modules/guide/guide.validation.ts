@@ -1,0 +1,25 @@
+import z from "zod";
+
+export const createGuideZodSchema = z.object({
+    bio: z.string().min(10).max(500),
+    location: z.string().min(2),
+    languages: z.array(z.string()).min(1),
+    experienceYears: z.number().min(0).max(50),
+    perTourCharge: z.number().min(1),
+    // documents: z.array(z.string()).min(1)
+});
+
+
+
+export const updateGuideZodSchema = z.object({
+    bio: z.string().min(10).max(500).optional(),
+    location: z.string().min(2).optional(),
+    languages: z.array(z.string()).min(1).optional(),
+    experienceYears: z.number().min(0).max(50).optional(),
+    perTourCharge: z.number().min(1).optional(),
+    // documents: z.array(z.string()).min(1).optional()
+});
+
+
+
+export const applySchema = z.object({ message: z.string().max(500).optional() });
