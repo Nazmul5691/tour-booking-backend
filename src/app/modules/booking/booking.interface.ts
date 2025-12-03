@@ -13,7 +13,10 @@ export interface IBooking {
     payment?: Types.ObjectId;
     guestCount: number;
     status: BOOKING_STATUS;
-    totalAmount?: number;
+    baseAmount?: number;
+    discountPercentage?: number;
+    amountAfterDiscount?: number;
+    discountDate?: Date;
     guide?: Types.ObjectId;
     guideFee?: number;
     companyEarning?: number;

@@ -29,4 +29,6 @@ export interface ITour {
     guides?: Types.ObjectId[];
     averageRating?: number;
     totalReviews?: number;
+    discountDate?: Date;
+    discountPercentage?: number;
 }

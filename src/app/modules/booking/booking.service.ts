@@ -16,96 +16,6 @@ import { IUser } from "../user/user.interface";
 
 
 
-
-
-// const createBooking = async (payload: Partial<IBooking>, userId: string) => {
-
-//     const transactionId = getTransactionId();
-
-//     const session = await Booking.startSession();
-//     session.startTransaction();
-
-
-//     try {
-//         const user = await User.findById(userId);
-//         // console.log(user?.phone, user?.address);
-
-//         if (!user?.phone || !user?.address) {
-//             throw new AppError(httpStatus.BAD_REQUEST, "Please update your profile to Book a tour")
-//         }
-
-//         const tour = await Tour.findById(payload.tour).select("costFrom")
-
-//         if (!tour?.costFrom) {
-//             throw new AppError(httpStatus.BAD_REQUEST, "No tour cost found")
-//         }
-
-//         const amount = Number(tour?.costFrom) * Number(payload.guestCount!)
-
-//         const booking = await Booking.create([{
-//             user: userId,
-//             status: BOOKING_STATUS.PENDING,
-//             ...payload
-//         }], { session })
-
-//         // throw new Error("some fake error")
-
-//         const payment = await Payment.create([{
-//             booking: booking[0]._id,
-//             status: PAYMENT_STATUS.UNPAID,
-//             transactionId: transactionId,
-//             amount: amount
-//         }], { session })
-
-//         const updateBooking = await Booking
-//             .findByIdAndUpdate(
-//                 booking[0]._id,
-//                 { payment: payment[0]._id },
-//                 { new: true, runValidators: true, session }
-//             )
-//             .populate("user", "name email phone address")
-//             .populate("tour", "title costFrom")
-//             .populate("payment")
-
-//         const userAddress = (updateBooking?.user as any).address;
-//         const userEmail = (updateBooking?.user as any).email;
-//         const userPhoneNumber = (updateBooking?.user as any).phone;
-//         const userName = (updateBooking?.user as any).name
-
-//         // console.log(userName);
-
-
-// const sslPayload: ISSLCommerz = {
-//     address: userAddress,
-//     email: userEmail,
-//     phoneNumber: userPhoneNumber,
-//     name: userName,
-//     amount: amount,
-//     transactionId: transactionId
-// }
-
-//         // console.log('after',sslPayload.name);
-
-//         const sslPayment = await SSLService.sslPaymentInit(sslPayload);
-
-//         await session.commitTransaction();       //transaction
-//         session.endSession();
-
-//         return {
-//             payment: sslPayment.GatewayPageURL,
-//             booking: updateBooking 
-//         };
-
-
-//     } catch (error) {
-//         await session.abortTransaction();        //rollBack
-//         session.endSession();
-//         throw error;
-//     }
-
-// }
-
-
 const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     const transactionId = getTransactionId();
     const session = await Booking.startSession();
@@ -118,29 +28,55 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             throw new AppError(httpStatus.BAD_REQUEST, "Please update your profile to book a tour");
         }
 
-        // 2. Find Tour + check pricing
-        const tour = await Tour.findById(payload.tour).select("costFrom guides");
+        // 2. Find Tour + discount info
+        const tour = await Tour.findById(payload.tour).select(
+            "costFrom guides startDate discountDate discountPercentage"
+        );
         if (!tour) throw new AppError(400, "Tour not found");
 
-        // must have at least 1 approved guide
+        // 3. Check guide
         const guideUserId = tour.guides?.[0];
         if (!guideUserId) throw new AppError(400, "No guide assigned to this tour");
 
         const guide = await Guide.findOne({ user: guideUserId, status: "APPROVED" });
         if (!guide) throw new AppError(400, "Guide not approved");
 
-        // 3. Pricing calculations
-        const totalAmount = Number(tour.costFrom) * Number(payload.guestCount!); // total = costFrom × guest
-        const guideFee = Number(guide.perTourCharge); // per booking
+        // 4. Calculate total amount
+        const baseAmount = Number(tour.costFrom) * Number(payload.guestCount!);
+
+        let discountPercentage = 0;
+        let discountAmount = 0;
+        let totalAmount = baseAmount;
+
+        // Apply discount if eligible
+        if (tour.discountDate && tour.discountPercentage) {
+            const now = new Date();
+            const deadline = new Date(tour.discountDate);
+
+            if (now <= deadline) {
+                discountPercentage = Number(tour.discountPercentage);
+                discountAmount = (baseAmount * discountPercentage) / 100;
+                totalAmount = baseAmount - discountAmount; // user pays discounted amount
+            }
+        }
+
+        // Guide fee
+        const guideFee = Number(guide.perTourCharge);
+
+        // Company earning = discounted total - guide fee
         const companyEarning = totalAmount - guideFee;
 
-        // 4. Create initial booking
+        // 5. Create booking
         const booking = await Booking.create(
             [{
                 user: userId,
+                tour: tour._id,
                 status: BOOKING_STATUS.PENDING,
                 guide: guide.user,
-                totalAmount,
+                guestCount: payload.guestCount,
+                baseAmount,
+                discountPercentage,
+                amountAfterDiscount: totalAmount,          // amount after discount
                 guideFee,
                 companyEarning,
                 ...payload
@@ -148,42 +84,41 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             { session }
         );
 
-        // 5. Create payment
+        // 6. Create payment
         const payment = await Payment.create(
             [{
                 booking: booking[0]._id,
                 status: PAYMENT_STATUS.UNPAID,
                 transactionId,
-                amount: totalAmount,
-                totalAmount,          // <-- ADD THIS
+                baseAmount,           // original total before discount (optional, for reference)
+                discountPercentage,
+                totalAmount,          // required by schema (discounted total)
+                amount: totalAmount,  // what user actually pays
                 guideFee,
-                companyEarning        // <-- if you want to save these in payment table
+                companyEarning
             }],
             { session }
         );
 
-        // 6. Attach payment to booking
+        // 7. Attach payment to booking
         const updatedBooking = await Booking.findByIdAndUpdate(
             booking[0]._id,
             { payment: payment[0]._id },
             { new: true, session }
         )
             .populate("user", "name email phone address")
-            .populate("tour", "title costFrom")
+            .populate("tour", "title costFrom startDate discountDate discountPercentage")
             .populate("payment")
             .populate("guide", "name email");
 
-            
-
-        // 7. Payment initialization
+        // 8. Initialize SSL payment
         const userObj = updatedBooking?.user as unknown as IUser;
-
         const sslPayload: ISSLCommerz = {
             address: userObj.address,
             email: userObj.email,
             phone: userObj.phone,
             name: userObj.name,
-            amount: totalAmount,
+            amount: totalAmount,  // user pays discounted total
             transactionId
         };
 
@@ -203,14 +138,6 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
         throw error;
     }
 };
-
-
-
-
-// Frontend(localhost:5173) - User - Tour - Booking (Pending) - Payment(Unpaid) -> SSLCommerz Page -> Payment Complete -> Backend(localhost:5000/api/v1/payment/success) -> Update Payment(PAID) & Booking(CONFIRM) -> redirect to frontend -> Frontend(localhost:5173/payment/success)
-
-// Frontend(localhost:5173) - User - Tour - Booking (Pending) - Payment(Unpaid) -> SSLCommerz Page -> Payment Fail / Cancel -> Backend(localhost:5000) -> Update Payment(FAIL / CANCEL) & Booking(FAIL / CANCEL) -> redirect to frontend -> Frontend(localhost:5173/payment/cancel or localhost:5173/payment/fail)
-
 
 
 

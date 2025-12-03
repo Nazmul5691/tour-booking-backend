@@ -32,8 +32,17 @@ const bookingSchema = new Schema<IBooking>(
             type: Schema.Types.ObjectId,
             ref: "User"
         },
-        totalAmount: {
+        baseAmount: {
             type: Number
+        },
+         discountPercentage: {
+            type: Number
+        },
+        amountAfterDiscount: {
+            type: Number
+        },
+        discountDate: {
+            type: Date
         },
         guideFee: {
             type: Number

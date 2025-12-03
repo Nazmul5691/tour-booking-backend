@@ -15,6 +15,9 @@ const paymentSchema = new Schema<IPayment>(
             required: true,
             unique: true
         },
+        baseAmount: {
+            type: Number,
+        },
         amount: {
             type: Number,
             required: true

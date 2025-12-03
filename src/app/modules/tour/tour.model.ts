@@ -102,6 +102,12 @@ const tourSchema = new Schema<ITour>(
             type: Number,
             default: 0,
         },
+        discountDate: {
+            type: Date
+        },  
+        discountPercentage: {
+            type: Number
+        }
     },
     {
         timestamps: true
