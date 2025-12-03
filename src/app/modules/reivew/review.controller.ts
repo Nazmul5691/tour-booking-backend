@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { ReviewService } from "./review.service";
@@ -33,35 +34,45 @@ export const createGuideReview = catchAsync(async (req: any, res) => {
 
 
 
-export const getTourReviews = catchAsync(async (req, res) => {
-    const result = await ReviewService.getAllTourReviews(req.query);
+const getAllTourReviews = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
 
+    // Pass the query parameters to the service
+    const result = await ReviewService.getAllTourReviews(query as Record<string, string>);
+
+    // Handle the { data, meta } structure from QueryBuilder
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Tour reviews retrieved",
-        data: result,
+        message: 'All tour reviews retrieved successfully',
+        data: result.data, 
+        meta: result.meta,
     });
 });
 
 
 
 
-export const getGuideReviews = catchAsync(async (req, res) => {
-    const result = await ReviewService.getAllGuideReviews(req.query);
+const getAllGuideReviews = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
 
+    // Pass the query parameters to the service
+    const result = await ReviewService.getAllGuideReviews(query as Record<string, string>);
+
+    // Handle the { data, meta } structure from QueryBuilder
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Guide reviews retrieved",
-        data: result,
+        message: 'All guide reviews retrieved successfully',
+        data: result.data,
+        meta: result.meta,
     });
 });
 
 
 export const ReviewController = {
     createTourReview,
-    getTourReviews,
+    getAllTourReviews,
     createGuideReview,
-    getGuideReviews,
+    getAllGuideReviews,
 };  

@@ -24,14 +24,14 @@ router.get(
 
 
 // Admin: list - view all applications
-router.get("/guide-applications", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.list);
+router.get("/guide-applications", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.getApplicationsForTourGuide);
 
 // POST /api/v1/tours/:tourId/apply-guide
 router.post(
     "/:tourId/apply-guide",
     checkAuth(Role.GUIDE, Role.USER), // allow guides (or users who are guides)
     validateRequest(applySchema),
-    GuideController.apply
+    GuideController.applyForTourAsGuide
 );
 
 

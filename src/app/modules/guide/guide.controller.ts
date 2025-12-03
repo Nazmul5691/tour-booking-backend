@@ -21,16 +21,25 @@ const registerGuide = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
 const getAllGuides = catchAsync(async (req: Request, res: Response) => {
-    const result = await GuideService.getAllGuides();
+    const query = req.query;
+
+    // Extract the authenticated user's role
+    const role = (req.user as JwtPayload).role;
+
+    // Pass query parameters AND the user's role to the service for validation
+    const result = await GuideService.getAllGuides(query as Record<string, string>, role);
 
     sendResponse(res, {
-        success: true,
         statusCode: 200,
-        message: "All guides retrieved",
-        data: result
+        success: true,
+        message: 'All guides retrieved successfully',
+        data: result.data,
+        meta: result.meta,
     });
 });
+
 
 const getSingleGuide = catchAsync(async (req: Request, res: Response) => {
     const guideId = req.params.id;
@@ -44,16 +53,22 @@ const getSingleGuide = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
 const updateGuideStatus = catchAsync(async (req: Request, res: Response) => {
-    const guideId = req.params.id;
-    const { status } = req.body;
-    const result = await GuideService.updateGuideStatus(guideId, status);
+    const { guideId } = req.params;
+    const { status } = req.body; // Assuming the new status is in the request body
+
+    // Extract the authenticated user's role
+    const role = (req.user as JwtPayload).role;
+
+    // Pass guideId, new status, AND the user's role to the service for validation
+    const result = await GuideService.updateGuideStatus(guideId, status, role);
 
     sendResponse(res, {
-        success: true,
         statusCode: 200,
-        message: "Guide status updated successfully",
-        data: result
+        success: true,
+        message: 'Guide status updated successfully',
+        data: result,
     });
 });
 
@@ -61,7 +76,7 @@ const updateGuideStatus = catchAsync(async (req: Request, res: Response) => {
 
 
 //applications for tours as guide
-const apply = catchAsync(async (req: Request, res: Response) => {
+const applyForTourAsGuide = catchAsync(async (req: Request, res: Response) => {
     const user = req.user as any; // from checkAuth middleware
     const tourId = req.params.tourId;
     const message = req.body.message;
@@ -76,20 +91,23 @@ const apply = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const list = catchAsync(async (req: Request, res: Response) => {
-    // allow admin to filter by status/tour/user via query
-    const filter: any = {};
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.tour) filter.tour = req.query.tour;
-    if (req.query.user) filter.user = req.query.user;
+const getApplicationsForTourGuide = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
 
-    const result = await GuideService.getApplications(filter);
+    // Extract the authenticated user's role
+    const role = (req.user as JwtPayload).role;
 
+    // Pass the query parameters AND the user's role to the service for validation
+    // The service now returns { data, meta }
+    const result = await GuideService.getApplicationsForTourGuide(query as Record<string, string>, role);
+
+    // 🛑 Updated to handle { data, meta } from the service result
     sendResponse(res, {
+        statusCode: 200,
         success: true,
-        statusCode: httpStatus.OK,
-        message: "Applications retrieved",
-        data: result
+        message: 'All guide applications retrieved successfully',
+        data: result.data, // Pass the fetched array of applications
+        meta: result.meta, // Pass the pagination metadata
     });
 });
 
@@ -121,11 +139,13 @@ const list = catchAsync(async (req: Request, res: Response) => {
 
 const updateApplicationStatus = catchAsync(async (req, res) => {
     const applicationId = req.params.id;
-    const { status } = req.body; 
+    const { status } = req.body;
+    const role = (req.user as JwtPayload).role;
 
     const result = await GuideService.updateApplicationStatus(
         applicationId,
-        status
+        status,
+        role
     );
 
     sendResponse(res, {
@@ -145,7 +165,7 @@ export const GuideController = {
     updateGuideStatus,
 
 
-    apply,
-    list,
+    applyForTourAsGuide,
+    getApplicationsForTourGuide,
     updateApplicationStatus
 };

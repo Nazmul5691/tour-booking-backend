@@ -12,10 +12,10 @@ const router = Router();
 
 router.post("/create-tour-review", checkAuth(...Object.values(Role)), validateRequest(createTourReviewValidation), ReviewController.createTourReview);
 
-router.get("/tour-review", ReviewController.getTourReviews);
+router.get("/tour-review", ReviewController.getAllTourReviews);
 
 router.post("/create-guide-review", checkAuth(...Object.values(Role)), validateRequest(createGuideReviewValidation), ReviewController.createGuideReview);
 
-router.get("/guide-review", ReviewController.getGuideReviews);
+router.get("/guide-review", ReviewController.getAllGuideReviews);
 
 export const Reviews = router;

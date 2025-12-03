@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import AppError from "../../errorHelpers/appError";
+import { QueryBuilder } from "../../utils/queryBuilder";
 import { Booking } from "../booking/booking.model";
 import { Guide } from "../guide/guide.model";
 import { Tour } from "../tour/tour.model";
@@ -122,7 +123,7 @@ const createGuideReview = async (user: any, payload: any) => {
     targetType: "GUIDE",
     ...payload,
   });
-  
+
 
   // ⭐ 4️⃣ UPDATE GUIDE RATING & COUNT
   const guideReviews = await Review.find({ guide: payload.guide });
@@ -139,22 +140,68 @@ const createGuideReview = async (user: any, payload: any) => {
 };
 
 
-const getAllGuideReviews = async (query: any) => {
-  const filter: any = {};
-  if (query.guide) filter.guide = query.guide;
-  if (query.rating) filter.rating = query.rating;
+const getAllGuideReviews = async (query: Record<string, string>) => {
 
-  return await Review.find(filter).populate("user", "name");
+  // 1. Setup the base query and QueryBuilder
+  // Filter for reviews where the target is a GUIDE (assuming you use a targetType field)
+  const baseQuery = Review.find({ targetType: "GUIDE" })
+    .populate("user", "name email")
+    .populate("guide", "user"); // Populate the guide field
+
+  const queryBuilder = new QueryBuilder(baseQuery, query);
+
+  // 2. Build the query pipeline
+  const reviewsQuery = queryBuilder
+    // .search(reviewSearchableFields) // Add search capability if needed
+    .filter() // <-- Handles filtering by any field in the query (e.g., ?guide=ID&rating=5)
+    .sort()
+    .fields()
+    .paginate();
+
+  // 3. Execute the query and get metadata concurrently
+  const [data, meta] = await Promise.all([
+    reviewsQuery.build(),
+    queryBuilder.getMeta()
+  ]);
+
+  // 4. Return the structured result with data and metadata
+  return {
+    data,
+    meta
+  };
 };
 
-const getAllTourReviews = async (query: any) => {
-  const filter: any = {};
-  if (query.tour) filter.tour = query.tour;
-  if (query.rating) filter.rating = query.rating;
 
-  return await Review.find(filter).populate("user", "name");
+const getAllTourReviews = async (query: Record<string, string>) => {
+
+    // 1. Setup the base query and QueryBuilder
+    // Filter for reviews where the target is a TOUR
+    const baseQuery = Review.find({ targetType: "TOUR" }) 
+        .populate("user", "name email")
+        .populate("tour", "title slug"); // Populate the tour field
+
+    const queryBuilder = new QueryBuilder(baseQuery, query);
+
+    // 2. Build the query pipeline
+    const reviewsQuery = queryBuilder
+        // .search(reviewSearchableFields) // Add search capability if needed
+        .filter() // <-- Handles filtering by any field in the query (e.g., ?tour=ID&rating=5)
+        .sort()
+        .fields()
+        .paginate();
+
+    // 3. Execute the query and get metadata concurrently
+    const [data, meta] = await Promise.all([
+        reviewsQuery.build(),
+        queryBuilder.getMeta()
+    ]);
+    
+    // 4. Return the structured result with data and metadata
+    return {
+        data,
+        meta
+    };
 };
-
 
 
 
