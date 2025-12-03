@@ -14,6 +14,8 @@ export interface IGuide {
     status: GUIDE_STATUS;
     perTourCharge: number;
     walletBalance: number;
+    averageRating?: number;
+    totalReviews?: number;
     createdAt?: Date;
 }
 

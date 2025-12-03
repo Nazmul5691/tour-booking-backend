@@ -34,9 +34,17 @@ const guideSchema = new Schema<IGuide>(
             required: true
         },
         walletBalance: {
-            type:Number,
+            type: Number,
             default: 0
-        }
+        },
+        averageRating: {
+            type: Number,
+            default: 0,
+        },
+        totalReviews: {
+            type: Number,
+            default: 0,
+        },
 
     },
     {

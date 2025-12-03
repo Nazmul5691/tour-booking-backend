@@ -17,16 +17,6 @@ export const createTourReview = catchAsync(async (req: any, res) => {
     });
 });
 
-export const getTourReviews = catchAsync(async (req, res) => {
-    const result = await ReviewService.getAllTourReviews(req.query);
-
-    sendResponse(res, {
-        statusCode: 200,
-        success: true,
-        message: "Tour reviews retrieved",
-        data: result,
-    });
-});
 
 
 export const createGuideReview = catchAsync(async (req: any, res) => {
@@ -40,6 +30,22 @@ export const createGuideReview = catchAsync(async (req: any, res) => {
         data: result,
     });
 });
+
+
+
+export const getTourReviews = catchAsync(async (req, res) => {
+    const result = await ReviewService.getAllTourReviews(req.query);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Tour reviews retrieved",
+        data: result,
+    });
+});
+
+
+
 
 export const getGuideReviews = catchAsync(async (req, res) => {
     const result = await ReviewService.getAllGuideReviews(req.query);

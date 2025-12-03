@@ -6,6 +6,9 @@ export const createGuideZodSchema = z.object({
     languages: z.array(z.string()).min(1),
     experienceYears: z.number().min(0).max(50),
     perTourCharge: z.number().min(1),
+    walletBalance: z.number().min(0).optional(),
+    averageRating: z.number().min(0).max(5).optional(),
+    totalReviews: z.number().min(0).optional(),
     // documents: z.array(z.string()).min(1)
 });
 
@@ -17,6 +20,9 @@ export const updateGuideZodSchema = z.object({
     languages: z.array(z.string()).min(1).optional(),
     experienceYears: z.number().min(0).max(50).optional(),
     perTourCharge: z.number().min(1).optional(),
+    walletBalance: z.number().min(0).optional(),
+    averageRating: z.number().min(0).max(5).optional(),
+    totalReviews: z.number().min(0).optional(),
     // documents: z.array(z.string()).min(1).optional()
 });
 

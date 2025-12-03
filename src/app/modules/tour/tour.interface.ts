@@ -27,4 +27,6 @@ export interface ITour {
     tourType: Types.ObjectId;
     deleteImages?: string[];
     guides?: Types.ObjectId[];
+    averageRating?: number;
+    totalReviews?: number;
 }

@@ -92,7 +92,16 @@ const tourSchema = new Schema<ITour>(
             type: Schema.Types.ObjectId,
             ref: "User",
             default: []
-        }]
+        }],
+        averageRating: {
+            type: Number,
+            default: 0,
+        },
+
+        totalReviews: {
+            type: Number,
+            default: 0,
+        },
     },
     {
         timestamps: true
