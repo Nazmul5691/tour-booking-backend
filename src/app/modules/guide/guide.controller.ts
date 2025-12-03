@@ -147,7 +147,5 @@ export const GuideController = {
 
     apply,
     list,
-    // approve,
-    // reject
     updateApplicationStatus
 };

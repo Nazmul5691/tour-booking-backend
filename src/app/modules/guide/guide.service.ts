@@ -78,9 +78,7 @@ const updateGuideStatus = async (guideId: string, status: GUIDE_STATUS) => {
 
 
 
-/**
- * Apply for a tour as guide
- */
+
 const applyForTourAsGuide = async (userId: string, tourId: string, message?: string) => {
 
     // must be an approved guide record
@@ -111,9 +109,7 @@ const applyForTourAsGuide = async (userId: string, tourId: string, message?: str
     return app;
 };
 
-/**
- * Admin: list applications (optional filters)
- */
+
 const getApplications = async (filter: Record<string, any> = {}) => {
     const q: any = { ...filter };
     const apps = await GuideApplication.find(q)
@@ -124,69 +120,6 @@ const getApplications = async (filter: Record<string, any> = {}) => {
     return apps;
 };
 
-/**
- * Approve application — add guide to tour.guides and add tour to user's guideInfo.availableTours (atomic)
- */
-// const approveApplication = async (applicationId: string) => {
-//     // start session
-//     const session = await mongoose.startSession();
-//     session.startTransaction();
-
-//     try {
-//         const app = await GuideApplication.findById(applicationId).session(session);
-//         if (!app) throw new AppError(httpStatus.NOT_FOUND, "Application not found");
-//         if (app.status === APPLICATION_STATUS.APPROVED) throw new AppError(httpStatus.BAD_REQUEST, "Already approved");
-
-//         // ensure guide exists and approved
-//         const guide = await Guide.findOne({ user: app.user }).session(session);
-//         if (!guide || guide.status !== "APPROVED") {
-//             throw new AppError(httpStatus.BAD_REQUEST, "User is not an approved guide");
-//         }
-
-//         // add guide (user id) to tour.guides (avoid duplicates)
-//         await Tour.findByIdAndUpdate(
-//             app.tour,
-//             { $addToSet: { guides: app.user } },
-//             { session }
-//         );
-
-//         // ensure user document has guideInfo.availableTours — add tour id
-//         await User.findByIdAndUpdate(
-//             app.user,
-//             { $addToSet: { "guideInfo.availableTours": app.tour }, $set: { guideStatus: "APPROVED" } },
-//             { session, upsert: false }
-//         );
-
-//         // update application status
-//         app.status = APPLICATION_STATUS.APPROVED;
-//         await app.save({ session });
-
-//         await session.commitTransaction();
-//         session.endSession();
-
-//         // return populated application
-//         return await GuideApplication.findById(applicationId).populate({ path: "user", select: "name email" }).populate({ path: "tour", select: "title" });
-//     } catch (err) {
-//         await session.abortTransaction();
-//         session.endSession();
-//         throw err;
-//     }
-// };
-
-// /**
-//  * Reject application
-//  */
-// const rejectApplication = async (applicationId: string, reason?: string) => {
-//     const app = await GuideApplication.findById(applicationId);
-//     if (!app) throw new AppError(httpStatus.NOT_FOUND, "Application not found");
-//     if (app.status === APPLICATION_STATUS.APPROVED) throw new AppError(httpStatus.BAD_REQUEST, "Cannot reject an approved application");
-
-//     app.status = APPLICATION_STATUS.REJECTED;
-//     // optionally save reason: extend model if needed
-//     await app.save();
-
-//     return app;
-// };
 
 const updateApplicationStatus = async (applicationId: string, status: "APPROVED" | "REJECTED") => {
 
@@ -273,7 +206,5 @@ export const GuideService = {
 
     applyForTourAsGuide,
     getApplications,
-    // approveApplication,
-    // rejectApplication
     updateApplicationStatus
 };

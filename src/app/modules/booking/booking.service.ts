@@ -13,6 +13,7 @@ import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { getTransactionId } from "../../utils/getTransactionId";
 import { Guide } from "../guide/guide.model";
 import { IUser } from "../user/user.interface";
+import { QueryBuilder } from "../../utils/queryBuilder";
 
 
 
@@ -140,44 +141,173 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 };
 
 
+const getAllBookings = async (query: Record<string, string>, role: string) => {
 
-const getUserBookings = async () => {
+    // 1. 🛑 Role-Based Access Validation
+    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+        throw new AppError(
+            httpStatus.FORBIDDEN,
+            "You are not authorized to view all bookings."
+        );
+    }
+
+    // 2. Proceed with Query Building and Data Retrieval
+    const queryBuilder = new QueryBuilder(
+        Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+        query
+    );
+
+    const bookingsData = await queryBuilder
+        // .search(bookingSearchableFields) // Keeping commented as in original code
+        .sort()
+        .filter()
+        .fields()
+        .paginate();
+
+    const [data, meta] = await Promise.all([
+        bookingsData.build(),
+        queryBuilder.getMeta()
+    ]);
 
     return {
+        data,
+        meta
+    };
+};
 
+
+const getBookingById = async (bookingId: string, userId: string, role: string) => {
+
+    // 1. Retrieve the booking (including referenced IDs for comparison)
+    const booking = await Booking.findById(bookingId)
+        .populate('user', 'name email')
+        .populate('tour', 'title slug location')
+        .populate('guide', 'name email');
+
+    if (!booking) {
+        throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
     }
-}
 
+    // Convert ObjectIds to strings for accurate comparison
+    const bookingOwnerId = booking.user._id.toString();
+   
 
-const getBookingById = async () => {
-
+    // 2. 🛑 Access Control Validation
+    
+    // Check 1: ADMIN/SUPER_ADMIN can view ANY booking
+    const isAdminOrSuperAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+    
+    // Check 2: The user is the booking owner
+    const isOwner = bookingOwnerId === userId;
+    
+    
+    
+    // Grant access if ANY of the checks are true
+    if (isAdminOrSuperAdmin || isOwner ) {
+        // Access granted!
+    } 
+    // Otherwise, access is forbidden
+    else {
+        throw new AppError(
+            httpStatus.FORBIDDEN, 
+            "You are not authorized to view this booking. Access is restricted to the booking owner, the assigned guide, or administrative staff."
+        );
+    }
+    
+    // 3. Return the data
     return {
+        data: booking
+    };
+};
 
-    }
-}
 
+const getMyBookings = async (userId: string, query: Record<string, string>) => {
 
-const updateBookingStatus = async () => {
+    // Force filter by the authenticated user's ID
+    const filterQuery = {
+        ...query,
+        user: userId, // <-- Enforces ownership: only data belonging to this userId is fetched
+    };
 
+    const queryBuilder = new QueryBuilder(
+        Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+        filterQuery
+    );
+
+    const bookingsData = await queryBuilder
+        .sort()
+        .filter()
+        .fields()
+        .paginate();
+
+    const [data, meta] = await Promise.all([
+        bookingsData.build(),
+        queryBuilder.getMeta()
+    ]);
+
+    
     return {
+        data,
+        meta
+    };
+};
 
+
+const updateBookingStatus = async (bookingId: string, status: string, userId: string) => {
+
+    // 1. Find the existing booking
+    const existingBooking = await Booking.findById(bookingId);
+
+    if (!existingBooking) {
+        throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
     }
-}
 
+    const bookingOwnerId = existingBooking.user.toString();
 
-const getAllBookings = async () => {
+    // 2. STRICT Ownership Check
+    // Check if the authenticated user (userId) is the one who created the booking (bookingOwnerId)
+    if (bookingOwnerId !== userId) {
+        throw new AppError(
+            httpStatus.FORBIDDEN,
+            "You are not permitted to update this booking. Only the original booking owner can make changes."
+        );
+    }
 
-    return {}
-}
+    // 3. Status Validation (Assuming the owner can only CANCEL their booking)
+    // If the owner can change the status, it is usually only to CANCELLED.
+    if (status !== "CANCEL") {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            "As the owner, you can only change the booking status to CANCELLED."
+        );
+    }
+
+    // 4. Perform the update
+    const updatedBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        { status },
+        { new: true, runValidators: true }
+    )
+        .populate('user', 'name email')
+        .populate('tour', 'title slug location')
+        .populate('guide', 'name email');
+
+    if (!updatedBooking) {
+        throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to retrieve the updated booking.");
+    }
+
+    return updatedBooking;
+};
+
 
 
 
 export const BookingService = {
     createBooking,
-    getUserBookings,
+    getAllBookings,
+    getMyBookings,
     getBookingById,
     updateBookingStatus,
-    getAllBookings
 }
 
 

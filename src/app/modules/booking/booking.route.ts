@@ -27,13 +27,13 @@ router.get("/",
 //api/v1/booking/my-bookings    ->get my bookings
 router.get("/my-bookings",
     checkAuth(...Object.values(Role)),
-    BookingController.getUserBookings
+    BookingController.getMyBookings
 )
 
 
 // api/v1/booking/bookingId        ->get single bookings
 router.get("/:bookingId",
-    checkAuth(...Object.values(Role)),
+    checkAuth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN),
     BookingController.getSingleBooking
 )
 
