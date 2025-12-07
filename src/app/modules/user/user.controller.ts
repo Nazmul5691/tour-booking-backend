@@ -51,6 +51,16 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
 })
 
 
+const createAdmin = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await UserServices.createAdmin(req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Admin Created successfully!",
+        data: result
+    })
+});
 
 
 const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -131,8 +141,10 @@ const getSingleUser = catchAsync(async (req: Request, res: Response, next: NextF
 
 export const UserControllers = {
     createUser,
+    createAdmin,
     getAllUsers,
     getMe,
     getSingleUser,
     updateUser
+    
 }

@@ -51,6 +51,35 @@ const createUser = async (payload: Partial<IUser>) => {
     return user;
 }
 
+
+
+const createAdmin = async (payload: Partial<IUser>) => {
+
+    const { email, password, role, ...rest } = payload;
+
+    const isUserExit = await User.findOne({ email });
+
+    if (isUserExit) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist")
+    }
+
+    const hashedPassword = await bcryptjs.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND));
+
+    const authProvider: IAuthProvider = { provider: "credentials", providerId: email as string }
+
+    const user = await User.create({
+        email,
+        password: hashedPassword,
+        role: role ? role : Role.ADMIN,
+        auths: [authProvider],
+        ...rest
+    })
+
+    return user;
+};
+
+
+
 const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
 
     /**
@@ -79,7 +108,7 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
     if (decodedToken.role === Role.ADMIN && ifUserExists.role === Role.SUPER_ADMIN) {
         throw new AppError(401, "You are not authorized")
     }
-    
+
 
     if (payload.phone) {
         const isPhoneNumberExits = await User.findOne({ phone: payload.phone });
@@ -176,6 +205,7 @@ const getSingleUser = async (id: string) => {
 
 export const UserServices = {
     createUser,
+    createAdmin,
     getAllUsers,
     getMe,
     getSingleUser,
