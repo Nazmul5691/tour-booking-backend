@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/appError";
@@ -12,7 +13,11 @@ import jwt from 'jsonwebtoken'
 import { sendEmail } from "../../utils/sendEmail";
 
 
-
+interface ForgotPasswordResetPayload {
+  id: string;
+  token: string;
+  newPassword: string;
+}
 
 // const credentialsLogin = async (payload: Partial<IUser>) => {
 
@@ -144,7 +149,7 @@ const forgotPassword = async (email: string) => {
 
     const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, { expiresIn: "10m" })
 
-    const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExit._id}&token=${resetToken}`
+    const resetUILink = `${envVars.FRONTEND_URL}/forget-password-reset?id=${isUserExit._id}&token=${resetToken}`
 
     sendEmail({
         to: isUserExit.email,
@@ -161,6 +166,39 @@ const forgotPassword = async (email: string) => {
      */
 
 }
+
+
+export const forgotPasswordReset = async ({
+    id,
+    token,
+    newPassword,
+}: ForgotPasswordResetPayload) => {
+    // 1️⃣ Verify token
+    let payload: any;
+    try {
+        payload = jwt.verify(token, envVars.JWT_ACCESS_SECRET!);
+    } catch (err) {
+        throw new AppError(401, "Invalid or expired token");
+    }
+
+    if (payload.userId !== id) {
+        throw new AppError(401, "Token does not match user");
+    }
+
+    // 2️⃣ Find user
+    const user = await User.findById(id);
+    if (!user) {
+        throw new AppError(404, "User not found");
+    }
+
+    // 3️⃣ Hash new password and save
+    const hashedPassword = await bcryptjs.hash(
+        newPassword,
+        Number(envVars.BCRYPT_SALT_ROUND)
+    );
+    user.password = hashedPassword;
+    await user.save();
+};
 
 
 // const resetPassword = async ( newPassword: string, id: string, decodedToken: JwtPayload) => {
@@ -193,5 +231,6 @@ export const AuthServices = {
     resetPassword,
     setPassword,
     changePassword,
-    forgotPassword
+    forgotPassword,
+    forgotPasswordReset
 }

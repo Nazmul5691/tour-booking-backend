@@ -183,13 +183,42 @@ const forgotPassword = catchAsync(async (req: Request, res: Response, next: Next
 })
 
 
+const forgotPasswordReset = catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+        // ✅ Parse body properly (for Next.js/Edge runtime or Express)
+        const body = req.body as any; // If Express with JSON parser, this is fine
+        const { id, token, newPassword, confirmPassword } = body;
+
+        // 1️⃣ Basic validation
+        if (!id || !token || !newPassword || !confirmPassword) {
+            throw new AppError(httpStatus.BAD_REQUEST, "All fields are required");
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Passwords do not match");
+        }
+
+        // 2️⃣ Call AuthService to reset password
+        await AuthServices.forgotPasswordReset({ id, token, newPassword });
+
+        // 3️⃣ Send success response
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Password reset successfully",
+            data: null,
+        });
+    }
+);
+
+
 
 const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     // const { newPassword, id } = req.body
     const decodedToken = req.user
 
-    await AuthServices.resetPassword(req.body, decodedToken as JwtPayload)   
+    await AuthServices.resetPassword(req.body, decodedToken as JwtPayload)
 
     sendResponse(res, {
         success: true,
@@ -237,5 +266,6 @@ export const AuthControllers = {
     resetPassword,
     setPassword,
     forgotPassword,
-    googleCallbackController
+    googleCallbackController,
+    forgotPasswordReset
 }
