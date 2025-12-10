@@ -9,7 +9,7 @@ const router = Router();
 
 // logged in USER can apply to become a guide
 router.post(
-    "/register",
+    "/register-guide",
     checkAuth(Role.USER),
     validateRequest(createGuideZodSchema),
     GuideController.registerGuide
@@ -58,7 +58,7 @@ router.get(
 );
 
 
-router.post(
+router.patch(
     "/approvedStatus/:id",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
     GuideController.updateGuideStatus

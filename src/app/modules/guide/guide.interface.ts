@@ -16,6 +16,7 @@ export interface IGuide {
     walletBalance: number;
     averageRating?: number;
     totalReviews?: number;
+    bio?: string;
     createdAt?: Date;
 }
 

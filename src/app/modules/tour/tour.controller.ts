@@ -56,19 +56,38 @@ const getSingleTour = catchAsync(async (req: Request, res: Response) => {
 
 
 
+// const updateTour = catchAsync(async (req: Request, res: Response) => {
+//     const payload: ITour = {
+//         ...req.body,
+//         images: (req.files as Express.Multer.File[]).map(file => file.path)
+//     }
+//     const result = await TourService.updateTour(req.params.id, payload);
+
+
+//     // const result = await TourService.updateTour(req.params.id, req.body);
+//     sendResponse(res, {
+//         statusCode: 200,
+//         success: true,
+//         message: 'Tour updated successfully',
+//         data: result,
+//     });
+// });
 const updateTour = catchAsync(async (req: Request, res: Response) => {
-    const payload: ITour = {
+    const files = req.files as Express.Multer.File[] | undefined;
+
+    const payload: Partial<ITour> = {
         ...req.body,
-        images: (req.files as Express.Multer.File[]).map(file => file.path)
-    }
+        ...(files && files.length > 0
+            ? { images: files.map(file => file.path) }
+            : {}),
+    };
+
     const result = await TourService.updateTour(req.params.id, payload);
 
-
-    // const result = await TourService.updateTour(req.params.id, req.body);
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'Tour updated successfully',
+        message: "Tour updated successfully",
         data: result,
     });
 });

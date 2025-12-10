@@ -38,44 +38,188 @@ const registerGuide = async (userId: string, payload: any) => {
     return guide;
 };
 
-const getAllGuides = async (query: Record<string, string>, role: string) => {
+// const getAllGuides = async (query: Record<string, string>, role: string) => {
 
-    // 1. 🛑 Role-Based Access Validation
+//     // 1. 🛑 Role-Based Access Validation
+//     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+//         throw new AppError(
+//             httpStatus.FORBIDDEN,
+//             "You are not authorized to view all guides. Access is restricted to Admin and Super Admin roles."
+//         );
+//     }
+
+//     // 2. Setup the base query and QueryBuilder
+//     const baseQuery = Guide.find().populate({
+//         path: "user",
+//         select: "-password"
+//     });
+
+//     const queryBuilder = new QueryBuilder(baseQuery, query);
+
+//     // 3. Build the query pipeline
+//     const guidesData = await queryBuilder
+//         // Assuming guideSearchableFields exists (e.g., ['user.name', 'status'])
+//         // .search(guideSearchableFields) 
+//         .sort()
+//         .filter()
+//         .fields()
+//         .paginate();
+
+//     // 4. Execute the query and get metadata concurrently
+//     const [data, meta] = await Promise.all([
+//         guidesData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+// export const getAllGuides = async (query: Record<string, string>, role: string) => {
+//     // 1. 🛑 Role-Based Access Validation
+//     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+//         throw new AppError(
+//             httpStatus.FORBIDDEN,
+//             "You are not authorized to view all guides. Access is restricted to Admin and Super Admin roles."
+//         );
+//     }
+
+//     // 2. Setup the base query with filter for APPROVED guides
+//     const baseQuery = User.find({ guideStatus: "APPROVED" }).select("-password");
+
+//     const queryBuilder = new QueryBuilder(baseQuery, query);
+
+//     // 3. Build the query pipeline
+//     const guidesData = await queryBuilder
+//         // .search(guideSearchableFields) // Optional
+//         .sort()
+//         .filter()
+//         .fields()
+//         .paginate();
+
+//     // 4. Execute query and get metadata
+//     const [data, meta] = await Promise.all([
+//         guidesData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+
+
+// export const getAllGuides = async (query: Record<string, string>, role: string) => {
+//     // 1️⃣ Role-based access
+//     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+//         throw new AppError(
+//             httpStatus.FORBIDDEN,
+//             "You are not authorized to view all guides. Access is restricted to Admin and Super Admin roles."
+//         );
+//     }
+
+//     // 2️⃣ Base query: only APPROVED guides
+//     const baseQuery = Guide.find({ status: "APPROVED" })
+//         .populate({
+//             path: "user",
+//             select: "-password" // exclude password
+//         });
+
+//     const queryBuilder = new QueryBuilder(baseQuery, query);
+
+//     // 3️⃣ Build query pipeline (sorting, filtering, pagination)
+//     const guidesData = await queryBuilder
+//         .sort()
+//         .filter()
+//         .fields()
+//         .paginate();
+
+//     // 4️⃣ Execute query & metadata
+//     const [data, meta] = await Promise.all([
+//         guidesData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return { data, meta };
+// };
+
+export const getAllGuides = async (
+    query: Record<string, string>,
+    role: string
+) => {
+
     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
-        throw new AppError(
-            httpStatus.FORBIDDEN,
-            "You are not authorized to view all guides. Access is restricted to Admin and Super Admin roles."
-        );
+        throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
     }
 
-    // 2. Setup the base query and QueryBuilder
-    const baseQuery = Guide.find().populate({
-        path: "user",
-        select: "-password"
-    });
+    const {
+        page = "1",
+        limit = "10",
+        searchTerm,
+        email,
+        contactNumber
+    } = query;
 
-    const queryBuilder = new QueryBuilder(baseQuery, query);
+    const skip = (Number(page) - 1) * Number(limit);
 
-    // 3. Build the query pipeline
-    const guidesData = await queryBuilder
-        // Assuming guideSearchableFields exists (e.g., ['user.name', 'status'])
-        // .search(guideSearchableFields) 
-        .sort()
-        .filter()
-        .fields()
-        .paginate();
+    const userMatch: any = {};
 
-    // 4. Execute the query and get metadata concurrently
-    const [data, meta] = await Promise.all([
-        guidesData.build(),
-        queryBuilder.getMeta()
-    ]);
+    if (searchTerm) {
+        userMatch["user.name"] = { $regex: searchTerm, $options: "i" };
+    }
+
+    if (email) {
+        userMatch["user.email"] = { $regex: email, $options: "i" };
+    }
+
+    if (contactNumber) {
+        userMatch["user.phone"] = { $regex: contactNumber, $options: "i" };
+    }
+
+    const pipeline: any[] = [
+        {
+            $match: {
+                status: { $in: ["APPROVED", "PENDING", "REJECTED"] }
+            }
+        },
+
+        {
+            $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+
+        { $unwind: "$user" },
+
+        Object.keys(userMatch).length ? { $match: userMatch } : null,
+
+        { $skip: skip },
+        { $limit: Number(limit) }
+    ].filter(Boolean);
+
+    const data = await Guide.aggregate(pipeline);
+
+    // const total = await Guide.countDocuments({ status: "APPROVED" });
+    const total = await Guide.countDocuments();
 
     return {
         data,
-        meta
+        meta: {
+            page: Number(page),
+            limit: Number(limit),
+            total,
+            totalPage: Math.ceil(total / Number(limit))
+        }
     };
 };
+
+
+
 
 const getSingleGuide = async (id: string) => {
     const guide = await Guide.findById(id).populate({
@@ -210,7 +354,7 @@ const getApplicationsForTourGuide = async (query: Record<string, string>, role: 
         applicationsQuery.build(),
         queryBuilder.getMeta()
     ]);
-    
+
     // The results will be automatically filtered if the user passes ?status=APPROVED in the query.
 
     return {

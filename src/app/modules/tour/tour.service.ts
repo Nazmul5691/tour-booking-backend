@@ -9,24 +9,24 @@ import { Tour, TourType } from "./tour.model";
 ///////////////////// tour ///////////////////
 const createTour = async (payload: ITour) => {
 
-    const existingTour = await Tour.findOne({ title: payload.title });
-    if (existingTour) {
-        throw new Error("A tour with this title already exists.");
-    }
+  const existingTour = await Tour.findOne({ title: payload.title });
+  if (existingTour) {
+    throw new Error("A tour with this title already exists.");
+  }
 
-    const baseSlug = payload.title.toLowerCase().split(" ").join("-")
-    let slug = `${baseSlug}`
+  const baseSlug = payload.title.toLowerCase().split(" ").join("-")
+  let slug = `${baseSlug}`
 
-    let counter = 0;
-    while (await Tour.exists({ slug })) {
-        slug = `${slug}-${counter++}` // dhaka-division-2
-    }
+  let counter = 0;
+  while (await Tour.exists({ slug })) {
+    slug = `${slug}-${counter++}` // dhaka-division-2
+  }
 
-    payload.slug = slug;
+  payload.slug = slug;
 
-    const tour = await Tour.create(payload)
+  const tour = await Tour.create(payload)
 
-    return tour;
+  return tour;
 };
 
 // const getAllToursOld = async (query: Record<string, string>) => {
@@ -128,36 +128,36 @@ const createTour = async (payload: ITour) => {
 
 const getAllTours = async (query: Record<string, string>) => {
 
-    const queryBuilder = new QueryBuilder(Tour.find(), query)
+  const queryBuilder = new QueryBuilder(Tour.find(), query)
 
-    const tours = await queryBuilder
-        .search(tourSearchableFields)
-        .filter()
-        .sort()
-        .fields()
-        .paginate()
+  const tours = await queryBuilder
+    .search(tourSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .paginate()
 
 
-    // const meta = await queryBuilder.getMeta()
+  // const meta = await queryBuilder.getMeta()
 
-    const [data, meta] = await Promise.all([
-        tours.build(),
-        queryBuilder.getMeta()
-    ])
+  const [data, meta] = await Promise.all([
+    tours.build(),
+    queryBuilder.getMeta()
+  ])
 
-    return {
-        data,
-        meta
-    }
+  return {
+    data,
+    meta
+  }
 };
 
 const getSingleTour = async (slug: string) => {
 
-    const tour = await Tour.findOne({ slug })
+  const tour = await Tour.findOne({ slug })
 
-    return {
-        data: tour
-    }
+  return {
+    data: tour
+  }
 
 }
 
@@ -192,56 +192,200 @@ const getSingleTour = async (slug: string) => {
 // };
 
 
-const updateTour = async (id: string, payload: Partial<ITour>) => {
+// const updateTour = async (id: string, payload: Partial<ITour>) => {
 
-    const existingTour = await Tour.findById(id);
+//     const existingTour = await Tour.findById(id);
 
-    if (!existingTour) {
-        throw new Error("Tour not found.");
+//     if (!existingTour) {
+//         throw new Error("Tour not found.");
+//     }
+
+//     if (payload.title) {
+//         const baseSlug = payload.title.toLowerCase().split(" ").join("-")
+//         let slug = `${baseSlug}`
+
+//         let counter = 0;
+//         while (await Tour.exists({ slug })) {
+//             slug = `${slug}-${counter++}` // dhaka-division-2
+//         }
+
+//         payload.slug = slug
+//     }
+
+//      if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
+//         payload.images = [...payload.images, ...existingTour.images]
+//     }
+
+//     if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+
+//         const restDBImages = existingTour.images.filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+
+//         const updatedPayloadImages = (payload.images || [])
+//             .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+//             .filter(imageUrl => !restDBImages.includes(imageUrl))
+
+//         payload.images = [...restDBImages, ...updatedPayloadImages]
+
+
+//     }
+
+//     const updatedTour = await Tour.findByIdAndUpdate(id, payload, { new: true });
+
+//      if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+//         await Promise.all(payload.deleteImages.map(url => deleteImageFromCLoudinary(url)))
+//     }
+
+
+//     return updatedTour;
+// };
+
+
+
+// const updateTour = async (id: string, payload: Partial<ITour>) => {
+
+//   const existingTour = await Tour.findById(id);
+//   if (!existingTour) {
+//     throw new Error("Tour not found.");
+//   }
+
+//   // ✅ ✅ ✅ FIX HERE (VERY IMPORTANT)
+//   const deleteImages = Array.isArray(payload.deleteImages)
+//     ? payload.deleteImages
+//     : payload.deleteImages
+//     ? [payload.deleteImages]
+//     : [];
+
+//   // ---------------------------------
+//   // Slug update
+//   // ---------------------------------
+//   if (payload.title) {
+//     const baseSlug = payload.title.toLowerCase().split(" ").join("-");
+//     let slug = baseSlug;
+//     let counter = 0;
+
+//     while (await Tour.exists({ slug })) {
+//       slug = `${baseSlug}-${counter++}`;
+//     }
+
+//     payload.slug = slug;
+//   }
+
+//   // ---------------------------------
+//   // Merge old & new images
+//   // ---------------------------------
+//   if (payload.images?.length && existingTour.images?.length) {
+//     payload.images = [...payload.images, ...existingTour.images];
+//   }
+
+//   // ---------------------------------
+//   // Delete selected images
+//   // ---------------------------------
+//   if (deleteImages.length > 0 && existingTour.images?.length) {
+
+//     const restDBImages = existingTour.images.filter(
+//       (img) => !deleteImages.includes(img)
+//     );
+
+//     const newlyUploaded = (payload.images || []).filter(
+//       (img) => !deleteImages.includes(img)
+//     );
+
+//     payload.images = [...restDBImages, ...newlyUploaded];
+//   }
+
+//   // ---------------------------------
+//   // Update DB
+//   // ---------------------------------
+//   const updatedTour = await Tour.findByIdAndUpdate(id, payload, {
+//     new: true,
+//   });
+
+//   // ---------------------------------
+//   // Delete from Cloudinary
+//   // ---------------------------------
+//   if (deleteImages.length > 0) {
+//     await Promise.all(
+//       deleteImages.map((url) => deleteImageFromCLoudinary(url))
+//     );
+//   }
+
+//   return updatedTour;
+// };
+
+const updateTour = async (id: string, payload: Partial<ITour & { deleteImages?: string | string[] }>) => {
+
+  const existingTour = await Tour.findById(id);
+  if (!existingTour) {
+    throw new Error("Tour not found.");
+  }
+
+  // ✅ CRITICAL FIX: Ensure deleteImages is always an array of strings
+  // The FormData parser (multer) might return a single string if only one item exists.
+  const deleteImages: string[] = Array.isArray(payload.deleteImages)
+    ? payload.deleteImages.filter(img => typeof img === 'string')
+    : typeof payload.deleteImages === 'string'
+      ? [payload.deleteImages]
+      : [];
+
+  // Remove deleteImages from the payload passed to Mongoose
+  const updatePayload = { ...payload };
+  delete updatePayload.deleteImages;
+
+
+  // ---------------------------------
+  // Slug update
+  // ---------------------------------
+  if (updatePayload.title) {
+    // ... (Slug generation logic - assuming it works) ...
+    const baseSlug = updatePayload.title.toLowerCase().split(" ").join("-");
+    let slug = baseSlug;
+    let counter = 0;
+
+    while (await Tour.exists({ slug })) {
+      slug = `${baseSlug}-${counter++}`;
     }
 
-    if (payload.title) {
-        const baseSlug = payload.title.toLowerCase().split(" ").join("-")
-        let slug = `${baseSlug}`
+    updatePayload.slug = slug;
+  }
 
-        let counter = 0;
-        while (await Tour.exists({ slug })) {
-            slug = `${slug}-${counter++}` // dhaka-division-2
-        }
+  // ---------------------------------
+  // Merge old & new images
+  // ---------------------------------
+  // Multer appends new images to payload.images. Now, merge with existing DB images.
+  const newUploadedImages = updatePayload.images || [];
 
-        payload.slug = slug
-    }
+  // Get the existing images that are NOT marked for deletion
+  const restDBImages = (existingTour.images || []).filter(
+    (img: string) => !deleteImages.includes(img)
+  );
 
-     if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        payload.images = [...payload.images, ...existingTour.images]
-    }
+  // Combine remaining old images with newly uploaded images
+  updatePayload.images = [...restDBImages, ...newUploadedImages];
 
-    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+  // ---------------------------------
+  // Update DB
+  // ---------------------------------
+  const updatedTour = await Tour.findByIdAndUpdate(id, updatePayload, {
+    new: true,
+  });
 
-        const restDBImages = existingTour.images.filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+  // ---------------------------------
+  // Delete from Cloudinary
+  // ---------------------------------
+  if (deleteImages.length > 0) {
+    // Assuming deleteImageFromCloudinary is a correct function that takes a URL
+    await Promise.all(
+      deleteImages.map((url) => deleteImageFromCLoudinary(url))
+    );
+  }
 
-        const updatedPayloadImages = (payload.images || [])
-            .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
-            .filter(imageUrl => !restDBImages.includes(imageUrl))
-
-        payload.images = [...restDBImages, ...updatedPayloadImages]
-
-
-    }
-
-    const updatedTour = await Tour.findByIdAndUpdate(id, payload, { new: true });
-
-     if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        await Promise.all(payload.deleteImages.map(url => deleteImageFromCLoudinary(url)))
-    }
-
-
-    return updatedTour;
+  return updatedTour;
 };
 
 
+
 const deleteTour = async (id: string) => {
-    return await Tour.findByIdAndDelete(id);
+  return await Tour.findByIdAndDelete(id);
 };
 
 
@@ -250,75 +394,75 @@ const deleteTour = async (id: string) => {
 ///////////////////// tour type ///////////////////
 // tour type
 const createTourType = async (payload: ITourType) => {
-    const existingTourType = await TourType.findOne({ name: payload.name });
+  const existingTourType = await TourType.findOne({ name: payload.name });
 
-    if (existingTourType) {
-        throw new Error("Tour type already exists.");
-    }
+  if (existingTourType) {
+    throw new Error("Tour type already exists.");
+  }
 
-    return await TourType.create({ name: payload.name });
+  return await TourType.create({ name: payload.name });
 };
 
 
 const getAllTourTypes = async (query: Record<string, string>) => {
 
-    const queryBuilder = new QueryBuilder(TourType.find(), query);
+  const queryBuilder = new QueryBuilder(TourType.find(), query);
 
-    const tourTypesData = await queryBuilder
-        .search(tourTypesSearchableFields)
-        .filter()
-        .sort()
-        .fields()
-        .paginate()
+  const tourTypesData = await queryBuilder
+    .search(tourTypesSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .paginate()
 
 
-        const [data, meta] = await Promise.all([
-            tourTypesData.build(),
-            queryBuilder.getMeta()
-        ])
-    return {
-        data, meta
-    }
+  const [data, meta] = await Promise.all([
+    tourTypesData.build(),
+    queryBuilder.getMeta()
+  ])
+  return {
+    data, meta
+  }
 };
 
 const getSingleTourType = async (id: string) => {
-    const tourType = await TourType.findById(id);
-    return {
-        data: tourType
-    };
+  const tourType = await TourType.findById(id);
+  return {
+    data: tourType
+  };
 };
 
 
 const updateTourType = async (id: string, payload: ITourType) => {
-    const existingTourType = await TourType.findById(id);
-    if (!existingTourType) {
-        throw new Error("Tour type not found.");
-    }
+  const existingTourType = await TourType.findById(id);
+  if (!existingTourType) {
+    throw new Error("Tour type not found.");
+  }
 
-    const updatedTourType = await TourType.findByIdAndUpdate(id, payload, { new: true });
-    return updatedTourType;
+  const updatedTourType = await TourType.findByIdAndUpdate(id, payload, { new: true });
+  return updatedTourType;
 };
 
 
 const deleteTourType = async (id: string) => {
-    const existingTourType = await TourType.findById(id);
-    if (!existingTourType) {
-        throw new Error("Tour type not found.");
-    }
+  const existingTourType = await TourType.findById(id);
+  if (!existingTourType) {
+    throw new Error("Tour type not found.");
+  }
 
-    return await TourType.findByIdAndDelete(id);
+  return await TourType.findByIdAndDelete(id);
 };
 
 
 export const TourService = {
-    createTour,
-    createTourType,
-    deleteTourType,
-    updateTourType,
-    getAllTourTypes,
-    getSingleTourType,
-    getAllTours,
-    getSingleTour,
-    updateTour,
-    deleteTour,
+  createTour,
+  createTourType,
+  deleteTourType,
+  updateTourType,
+  getAllTourTypes,
+  getSingleTourType,
+  getAllTours,
+  getSingleTour,
+  updateTour,
+  deleteTour,
 };

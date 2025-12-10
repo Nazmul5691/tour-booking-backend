@@ -45,6 +45,10 @@ const guideSchema = new Schema<IGuide>(
             type: Number,
             default: 0,
         },
+        bio: {
+            type: String,
+            required: true
+        }
 
     },
     {

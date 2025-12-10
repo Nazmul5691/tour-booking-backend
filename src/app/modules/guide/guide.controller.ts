@@ -22,19 +22,37 @@ const registerGuide = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-const getAllGuides = catchAsync(async (req: Request, res: Response) => {
+// const getAllGuides = catchAsync(async (req: Request, res: Response) => {
+//     const query = req.query;
+
+//     // Extract the authenticated user's role
+//     const role = (req.user as JwtPayload).role;
+
+//     // Pass query parameters AND the user's role to the service for validation
+//     const result = await GuideService.getAllGuides(query as Record<string, string>, role);
+
+//     sendResponse(res, {
+//         statusCode: 200,
+//         success: true,
+//         message: 'All guides retrieved successfully',
+//         data: result.data,
+//         meta: result.meta,
+//     });
+// });
+
+export const getAllGuides = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
 
     // Extract the authenticated user's role
     const role = (req.user as JwtPayload).role;
 
-    // Pass query parameters AND the user's role to the service for validation
+    // Pass query parameters AND the user's role to the service
     const result = await GuideService.getAllGuides(query as Record<string, string>, role);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: 'All guides retrieved successfully',
+        message: 'Approved guides retrieved successfully',
         data: result.data,
         meta: result.meta,
     });
@@ -55,14 +73,14 @@ const getSingleGuide = catchAsync(async (req: Request, res: Response) => {
 
 
 const updateGuideStatus = catchAsync(async (req: Request, res: Response) => {
-    const { guideId } = req.params;
+    const { id } = req.params;
     const { status } = req.body; // Assuming the new status is in the request body
 
     // Extract the authenticated user's role
     const role = (req.user as JwtPayload).role;
 
     // Pass guideId, new status, AND the user's role to the service for validation
-    const result = await GuideService.updateGuideStatus(guideId, status, role);
+    const result = await GuideService.updateGuideStatus(id, status, role);
 
     sendResponse(res, {
         statusCode: 200,

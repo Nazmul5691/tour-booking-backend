@@ -2,12 +2,13 @@
 
 import { NextFunction, Request, Response } from "express";
 import httpStatus from 'http-status-codes'
-import { UserServices } from "./user.service";
+import { deleteAdminService, updateUserStatusService, UserServices } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { verifyToken } from "../../utils/jwt";
 import { envVars } from "../../config/env";
 import { JwtPayload } from "jsonwebtoken";
+import AppError from "../../errorHelpers/appError";
 
 
 
@@ -115,7 +116,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
 const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     const decodedToken = req.user as JwtPayload
-    
+
     const result = await UserServices.getMe(decodedToken.userId);
 
     sendResponse(res, {
@@ -139,12 +140,79 @@ const getSingleUser = catchAsync(async (req: Request, res: Response, next: NextF
 })
 
 
+const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const result = await UserServices.deleteUser(id);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "User Deleted Successfully",
+        data: null
+    })
+})
+
+
+export const deleteAdmin = catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const decodedToken = req.user;
+
+    if (!decodedToken) {
+        throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+    }
+
+    await deleteAdminService(id, decodedToken);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Admin deleted successfully",
+        data: null,
+    });
+});
+
+
+export const updateUserStatus = catchAsync(
+    async (req: Request, res: Response) => {
+        const userId = req.params.id;
+        const { isActive } = req.body;
+
+        const decodedToken = req.user; // set by checkAuth middleware
+
+        if (!decodedToken) {
+            return sendResponse(res, {
+                success: false,
+                statusCode: httpStatus.UNAUTHORIZED,
+                message: "Unauthorized: token not found",
+                data: undefined
+            });
+        }
+
+        // Now TypeScript knows decodedToken exists
+        const updatedUser = await updateUserStatusService(
+            userId,
+            isActive,
+            decodedToken as JwtPayload
+        );
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: `User status updated successfully`,
+            data: updatedUser,
+        });
+    }
+);
+
+
 export const UserControllers = {
     createUser,
     createAdmin,
     getAllUsers,
     getMe,
     getSingleUser,
-    updateUser
-    
+    updateUser,
+    deleteUser,
+    updateUserStatus,
+    deleteAdmin
+
 }

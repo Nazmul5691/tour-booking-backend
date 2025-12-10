@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import AppError from "../../errorHelpers/appError";
-import { IAuthProvider, IUser, Role } from "./user.interface";
+import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import httpStatus from 'http-status-codes';
 import bcryptjs from 'bcryptjs';
@@ -202,6 +202,95 @@ const getSingleUser = async (id: string) => {
 };
 
 
+const deleteUser = async (id: string) => {
+    const user = await User.findByIdAndDelete(id);
+
+    return null;
+
+}
+// const deleteAdmin = async (id: string) => {
+//     const user = await User.findByIdAndDelete(id);
+
+//     return null;
+
+// }
+
+
+// const deleteAdmin = async (id: string) => {
+//     const user = await User.findById(id);
+
+//     if (!user) {
+//         throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//     }
+
+//     if (user.role !== Role.SUPER_ADMIN) {
+//         throw new AppError(
+//             httpStatus.BAD_REQUEST,
+//             "Only super admin can delete and admin"
+//         );
+//     }
+
+//     await User.findByIdAndDelete(id);
+//     return null;
+// };
+
+
+export const deleteAdminService = async (id: string, decodedToken: JwtPayload) => {
+    const loggedInUserRole = decodedToken.role;
+
+    if (loggedInUserRole !== Role.SUPER_ADMIN) {
+        throw new AppError(httpStatus.FORBIDDEN, "Only super admin can delete admins");
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (user.role !== Role.ADMIN) {
+        throw new AppError(httpStatus.BAD_REQUEST, "You can only delete admins");
+    }
+
+    await User.findByIdAndDelete(id);
+
+    return null;
+};
+
+
+
+export const updateUserStatusService = async (
+    userId: string,
+    isActive: IsActive,
+    decodedToken: JwtPayload
+) => {
+    const user = await User.findById(userId);
+
+    if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+
+    // ADMIN restrictions
+    if (decodedToken.role === Role.ADMIN) {
+        if (user.role === Role.SUPER_ADMIN) {
+            throw new AppError(403, "Admin cannot modify super admin");
+        }
+
+        // ADMIN can only block or unblock users (toggle isActive)
+        if (user.role === Role.USER) {
+            user.isActive = isActive; // must be IsActive enum
+            await user.save();
+            return user;
+        } else {
+            throw new AppError(403, "Admin cannot modify other admins");
+        }
+    }
+
+    // SUPER_ADMIN can update anyone's status
+    user.isActive = isActive;
+    await user.save();
+    return user;
+};
+
+
 
 export const UserServices = {
     createUser,
@@ -209,5 +298,8 @@ export const UserServices = {
     getAllUsers,
     getMe,
     getSingleUser,
-    updateUser
+    updateUser,
+    deleteUser,
+    updateUserStatusService,
+    deleteAdminService
 }
