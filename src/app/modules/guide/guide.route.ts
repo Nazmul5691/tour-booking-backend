@@ -26,6 +26,9 @@ router.get(
 // Admin: list - view all applications
 router.get("/guide-applications", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.getApplicationsForTourGuide);
 
+
+router.get("/guide-application/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.GUIDE), GuideController.getMyApplicationsForTourGuide);
+
 // POST /api/v1/tours/:tourId/apply-guide
 router.post(
     "/:tourId/apply-guide",
@@ -64,6 +67,9 @@ router.patch(
     GuideController.updateGuideStatus
 )
 
+
+
+// router.get("/available-tours", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.getApplicationsForTourGuide);
 
 
 

@@ -55,6 +55,19 @@ const getSingleTour = catchAsync(async (req: Request, res: Response) => {
 })
 
 
+const getSingleTourById = catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const result = await TourService.getSingleTourById(id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Tour Retrieved",
+        data: result.data,
+    });
+});
+
+
 
 // const updateTour = catchAsync(async (req: Request, res: Response) => {
 //     const payload: ITour = {
@@ -185,4 +198,5 @@ export const TourController = {
     getSingleTour,
     updateTour,
     deleteTour,
+    getSingleTourById
 };

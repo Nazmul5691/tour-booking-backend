@@ -162,6 +162,17 @@ const getSingleTour = async (slug: string) => {
 }
 
 
+const getSingleTourById = async (id: string) => {
+  const tour = await Tour.findById(id)
+    .populate("tourType")
+    .populate("division");
+
+  return {
+    data: tour
+  };
+};
+
+
 // make case insensitive for location
 // const getAllTours = async (query: Record<string, string>) => {
 //     const { searchTerm, ...filters } = query;
@@ -465,4 +476,5 @@ export const TourService = {
   getSingleTour,
   updateTour,
   deleteTour,
+  getSingleTourById
 };

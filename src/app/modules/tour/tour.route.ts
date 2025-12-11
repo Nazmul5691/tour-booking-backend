@@ -70,6 +70,8 @@ router.patch(
 
 router.delete("/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), TourController.deleteTour);
 
+router.get("/id/:id", TourController.getSingleTourById);
+
 
 
 export const TourRoutes = router

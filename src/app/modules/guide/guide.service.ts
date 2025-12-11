@@ -8,6 +8,7 @@ import { APPLICATION_STATUS, GUIDE_STATUS } from "./guide.interface";
 import { Tour } from "../tour/tour.model";
 import mongoose from "mongoose";
 import { QueryBuilder } from "../../utils/queryBuilder";
+import { Role } from "../user/user.interface";
 
 const registerGuide = async (userId: string, payload: any) => {
     const user = await User.findById(userId);
@@ -260,6 +261,7 @@ const updateGuideStatus = async (guideId: string, status: GUIDE_STATUS, role: st
     const user = await User.findById(guide.user);
     if (user) {
         user.guideStatus = status;
+        user.role = Role.GUIDE;
         await user.save();
     }
 
