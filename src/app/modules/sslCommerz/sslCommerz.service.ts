@@ -32,7 +32,7 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
             cus_state: "Dhaka",
             cus_postcode: "1000",
             cus_country: "Bangladesh",
-            cus_phone: payload.phoneNumber,
+            cus_phone: payload.phone,
             cus_fax: "01711111111",
             ship_name: "N/A",
             ship_add1: "N/A",

@@ -18,6 +18,130 @@ import { QueryBuilder } from "../../utils/queryBuilder";
 
 
 
+// const createBooking = async (payload: Partial<IBooking>, userId: string) => {
+//     const transactionId = getTransactionId();
+//     const session = await Booking.startSession();
+//     session.startTransaction();
+
+//     try {
+//         // 1. Check user profile
+//         const user = await User.findById(userId);
+//         if (!user?.phone || !user?.address) {
+//             throw new AppError(httpStatus.BAD_REQUEST, "Please update your profile to book a tour");
+//         }
+
+//         // 2. Find Tour + discount info
+//         const tour = await Tour.findById(payload.tour).select(
+//             "costFrom guides startDate discountDate discountPercentage"
+//         );
+//         if (!tour) throw new AppError(400, "Tour not found");
+
+//         // 3. Check guide
+//         const guideUserId = tour.guides?.[0];
+//         if (!guideUserId) throw new AppError(400, "No guide assigned to this tour");
+
+//         const guide = await Guide.findOne({ user: guideUserId, status: "APPROVED" });
+//         if (!guide) throw new AppError(400, "Guide not approved");
+
+//         // 4. Calculate total amount
+//         const baseAmount = Number(tour.costFrom) * Number(payload.guestCount!);
+
+//         let discountPercentage = 0;
+//         let discountAmount = 0;
+//         let totalAmount = baseAmount;
+
+//         // Apply discount if eligible
+//         if (tour.discountDate && tour.discountPercentage) {
+//             const now = new Date();
+//             const deadline = new Date(tour.discountDate);
+
+//             if (now <= deadline) {
+//                 discountPercentage = Number(tour.discountPercentage);
+//                 discountAmount = (baseAmount * discountPercentage) / 100;
+//                 totalAmount = baseAmount - discountAmount; // user pays discounted amount
+//             }
+//         }
+
+//         // Guide fee
+//         const guideFee = Number(guide.perTourCharge);
+
+//         // Company earning = discounted total - guide fee
+//         const companyEarning = totalAmount - guideFee;
+
+//         // 5. Create booking
+//         const booking = await Booking.create(
+//             [{
+//                 user: userId,
+//                 tour: tour._id,
+//                 status: BOOKING_STATUS.PENDING,
+//                 guide: guide.user,
+//                 guestCount: payload.guestCount,
+//                 baseAmount,
+//                 discountPercentage,
+//                 amountAfterDiscount: totalAmount,          // amount after discount
+//                 guideFee,
+//                 companyEarning,
+//                 ...payload
+//             }],
+//             { session }
+//         );
+
+//         // 6. Create payment
+//         const payment = await Payment.create(
+//             [{
+//                 booking: booking[0]._id,
+//                 status: PAYMENT_STATUS.UNPAID,
+//                 transactionId,
+//                 baseAmount,           // original total before discount (optional, for reference)
+//                 discountPercentage,
+//                 totalAmount,          // required by schema (discounted total)
+//                 amount: totalAmount,  // what user actually pays
+//                 guideFee,
+//                 companyEarning
+//             }],
+//             { session }
+//         );
+
+//         // 7. Attach payment to booking
+//         const updatedBooking = await Booking.findByIdAndUpdate(
+//             booking[0]._id,
+//             { payment: payment[0]._id },
+//             { new: true, session }
+//         )
+//             .populate("user", "name email phone address")
+//             .populate("tour", "title costFrom startDate discountDate discountPercentage")
+//             .populate("payment")
+//             .populate("guide", "name email");
+
+//         // 8. Initialize SSL payment
+//         const userObj = updatedBooking?.user as unknown as IUser;
+//         const sslPayload: ISSLCommerz = {
+//             address: userObj.address,
+//             email: userObj.email,
+//             phone: userObj.phone,
+//             name: userObj.name,
+//             amount: totalAmount,  // user pays discounted total
+//             transactionId
+//         };
+
+//         const sslPayment = await SSLService.sslPaymentInit(sslPayload);
+
+//         await session.commitTransaction();
+//         session.endSession();
+
+//         return {
+//             payment: sslPayment.GatewayPageURL,
+//             booking: updatedBooking
+//         };
+
+//     } catch (error) {
+//         await session.abortTransaction();
+//         session.endSession();
+//         throw error;
+//     }
+// };
+
+
 const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     const transactionId = getTransactionId();
     const session = await Booking.startSession();
@@ -36,12 +160,17 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
         );
         if (!tour) throw new AppError(400, "Tour not found");
 
-        // 3. Check guide
+        // 3. Check guide (optional now)
         const guideUserId = tour.guides?.[0];
-        if (!guideUserId) throw new AppError(400, "No guide assigned to this tour");
+        let guide = null;
+        let guideFee = 0;
 
-        const guide = await Guide.findOne({ user: guideUserId, status: "APPROVED" });
-        if (!guide) throw new AppError(400, "Guide not approved");
+        if (guideUserId) {
+            guide = await Guide.findOne({ user: guideUserId, status: "APPROVED" });
+            if (guide) {
+                guideFee = Number(guide.perTourCharge);
+            }
+        }
 
         // 4. Calculate total amount
         const baseAmount = Number(tour.costFrom) * Number(payload.guestCount!);
@@ -58,33 +187,33 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             if (now <= deadline) {
                 discountPercentage = Number(tour.discountPercentage);
                 discountAmount = (baseAmount * discountPercentage) / 100;
-                totalAmount = baseAmount - discountAmount; // user pays discounted amount
+                totalAmount = baseAmount - discountAmount;
             }
         }
-
-        // Guide fee
-        const guideFee = Number(guide.perTourCharge);
 
         // Company earning = discounted total - guide fee
         const companyEarning = totalAmount - guideFee;
 
         // 5. Create booking
-        const booking = await Booking.create(
-            [{
-                user: userId,
-                tour: tour._id,
-                status: BOOKING_STATUS.PENDING,
-                guide: guide.user,
-                guestCount: payload.guestCount,
-                baseAmount,
-                discountPercentage,
-                amountAfterDiscount: totalAmount,          // amount after discount
-                guideFee,
-                companyEarning,
-                ...payload
-            }],
-            { session }
-        );
+        const bookingData: any = {
+            user: userId,
+            tour: tour._id,
+            status: BOOKING_STATUS.PENDING,
+            guestCount: payload.guestCount,
+            baseAmount,
+            discountPercentage,
+            amountAfterDiscount: totalAmount,
+            guideFee,
+            companyEarning,
+            ...payload
+        };
+
+        // Only add guide if one exists
+        if (guide) {
+            bookingData.guide = guide.user;
+        }
+
+        const booking = await Booking.create([bookingData], { session });
 
         // 6. Create payment
         const payment = await Payment.create(
@@ -92,10 +221,10 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
                 booking: booking[0]._id,
                 status: PAYMENT_STATUS.UNPAID,
                 transactionId,
-                baseAmount,           // original total before discount (optional, for reference)
+                baseAmount,
                 discountPercentage,
-                totalAmount,          // required by schema (discounted total)
-                amount: totalAmount,  // what user actually pays
+                totalAmount,
+                amount: totalAmount,
                 guideFee,
                 companyEarning
             }],
@@ -103,15 +232,21 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
         );
 
         // 7. Attach payment to booking
-        const updatedBooking = await Booking.findByIdAndUpdate(
+        const populateQuery = Booking.findByIdAndUpdate(
             booking[0]._id,
             { payment: payment[0]._id },
             { new: true, session }
         )
             .populate("user", "name email phone address")
             .populate("tour", "title costFrom startDate discountDate discountPercentage")
-            .populate("payment")
-            .populate("guide", "name email");
+            .populate("payment");
+
+        // Only populate guide if one exists
+        if (guide) {
+            populateQuery.populate("guide", "name email");
+        }
+
+        const updatedBooking = await populateQuery;
 
         // 8. Initialize SSL payment
         const userObj = updatedBooking?.user as unknown as IUser;
@@ -120,7 +255,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             email: userObj.email,
             phone: userObj.phone,
             name: userObj.name,
-            amount: totalAmount,  // user pays discounted total
+            amount: totalAmount,
             transactionId
         };
 
@@ -312,14 +447,70 @@ const getBookingById = async (bookingId: string, userId: string, role: string) =
 //     };
 // };
 
+// const getMyBookings = async (userId: string, query: Record<string, string>) => {
+//     // ✅ FIX: Explicitly type filterQuery to allow dynamic properties
+//     const filterQuery: Record<string, any> = {
+//         ...query,
+//         user: userId,
+//     };
+
+//     // If there's a searchTerm, we need to find matching tours first
+//     let tourIds: any[] = [];
+//     if (query.searchTerm) {
+//         const tours = await Tour.find({
+//             $or: [
+//                 { title: { $regex: query.searchTerm, $options: 'i' } },
+//                 { location: { $regex: query.searchTerm, $options: 'i' } }
+//             ]
+//         }).select('_id');
+
+//         tourIds = tours.map(t => t._id);
+
+//         // Add tour filter to the query
+//         if (tourIds.length > 0) {
+//             filterQuery.tour = { $in: tourIds }; // ✅ Now this works
+//         } else {
+//             // No matching tours, return empty result
+//             return {
+//                 data: [],
+//                 meta: {
+//                     page: 1,
+//                     limit: 10,
+//                     total: 0,
+//                     totalPage: 0
+//                 }
+//             };
+//         }
+//     }
+
+//     const queryBuilder = new QueryBuilder(
+//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+//         filterQuery
+//     );
+
+//     const bookingsData = await queryBuilder
+//         .filter()
+//         .sort()
+//         .fields()
+//         .paginate();
+
+//     const [data, meta] = await Promise.all([
+//         bookingsData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+
 const getMyBookings = async (userId: string, query: Record<string, string>) => {
-    // ✅ FIX: Explicitly type filterQuery to allow dynamic properties
     const filterQuery: Record<string, any> = {
         ...query,
         user: userId,
     };
 
-    // If there's a searchTerm, we need to find matching tours first
     let tourIds: any[] = [];
     if (query.searchTerm) {
         const tours = await Tour.find({
@@ -331,11 +522,9 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
 
         tourIds = tours.map(t => t._id);
 
-        // Add tour filter to the query
         if (tourIds.length > 0) {
-            filterQuery.tour = { $in: tourIds }; // ✅ Now this works
+            filterQuery.tour = { $in: tourIds };
         } else {
-            // No matching tours, return empty result
             return {
                 data: [],
                 meta: {
@@ -349,7 +538,10 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
     }
 
     const queryBuilder = new QueryBuilder(
-        Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+        Booking.find()
+            .populate('user', 'name email')
+            .populate('tour', 'title slug location startDate') // ✅ startDate added
+            .populate('payment', 'status amount transactionId invoiceUrl'), // ✅ payment populate করলাম
         filterQuery
     );
 
