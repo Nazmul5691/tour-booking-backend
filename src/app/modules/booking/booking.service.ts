@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/appError";
@@ -190,30 +191,30 @@ const getBookingById = async (bookingId: string, userId: string, role: string) =
 
     // Convert ObjectIds to strings for accurate comparison
     const bookingOwnerId = booking.user._id.toString();
-   
+
 
     // 2. 🛑 Access Control Validation
-    
+
     // Check 1: ADMIN/SUPER_ADMIN can view ANY booking
     const isAdminOrSuperAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
-    
+
     // Check 2: The user is the booking owner
     const isOwner = bookingOwnerId === userId;
-    
-    
-    
+
+
+
     // Grant access if ANY of the checks are true
-    if (isAdminOrSuperAdmin || isOwner ) {
+    if (isAdminOrSuperAdmin || isOwner) {
         // Access granted!
-    } 
+    }
     // Otherwise, access is forbidden
     else {
         throw new AppError(
-            httpStatus.FORBIDDEN, 
+            httpStatus.FORBIDDEN,
             "You are not authorized to view this booking. Access is restricted to the booking owner, the assigned guide, or administrative staff."
         );
     }
-    
+
     // 3. Return the data
     return {
         data: booking
@@ -221,13 +222,131 @@ const getBookingById = async (bookingId: string, userId: string, role: string) =
 };
 
 
-const getMyBookings = async (userId: string, query: Record<string, string>) => {
+// const getMyBookings = async (userId: string, query: Record<string, string>) => {
 
-    // Force filter by the authenticated user's ID
-    const filterQuery = {
+//     // Force filter by the authenticated user's ID
+//     const filterQuery = {
+//         ...query,
+//         user: userId, // <-- Enforces ownership: only data belonging to this userId is fetched
+//     };
+
+//     const queryBuilder = new QueryBuilder(
+//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+//         filterQuery
+//     );
+
+//     const searchableFields = ['tour.title', 'tour.location'];
+
+//     const bookingsData = await queryBuilder
+//         .search(searchableFields)  
+//         .sort()
+//         .filter()
+//         .fields()
+//         .paginate();
+
+//     const [data, meta] = await Promise.all([
+//         bookingsData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+// const getMyBookings = async (userId: string, query: Record<string, string>) => {
+//     const filterQuery = {
+//         ...query,
+//         user: userId,
+//     };
+
+//     // If there's a searchTerm, we need to find matching tours first
+//     let tourIds: any[] = [];
+//     if (query.searchTerm) {
+//         const tours = await Tour.find({
+//             $or: [
+//                 { title: { $regex: query.searchTerm, $options: 'i' } },
+//                 { location: { $regex: query.searchTerm, $options: 'i' } }
+//             ]
+//         }).select('_id');
+
+//         tourIds = tours.map(t => t._id);
+
+//         // Add tour filter to the query
+//         if (tourIds.length > 0) {
+//             filterQuery.tour = { $in: tourIds };
+//         } else {
+//             // No matching tours, return empty result
+//             return {
+//                 data: [],
+//                 meta: {
+//                     page: 1,
+//                     limit: 10,
+//                     total: 0,
+//                     totalPage: 0
+//                 }
+//             };
+//         }
+//     }
+
+//     const queryBuilder = new QueryBuilder(
+//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
+//         filterQuery
+//     );
+
+//     const bookingsData = await queryBuilder
+//         .filter()
+//         .sort()
+//         .fields()
+//         .paginate();
+
+//     const [data, meta] = await Promise.all([
+//         bookingsData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+
+const getMyBookings = async (userId: string, query: Record<string, string>) => {
+    // ✅ FIX: Explicitly type filterQuery to allow dynamic properties
+    const filterQuery: Record<string, any> = {
         ...query,
-        user: userId, // <-- Enforces ownership: only data belonging to this userId is fetched
+        user: userId,
     };
+
+    // If there's a searchTerm, we need to find matching tours first
+    let tourIds: any[] = [];
+    if (query.searchTerm) {
+        const tours = await Tour.find({
+            $or: [
+                { title: { $regex: query.searchTerm, $options: 'i' } },
+                { location: { $regex: query.searchTerm, $options: 'i' } }
+            ]
+        }).select('_id');
+
+        tourIds = tours.map(t => t._id);
+
+        // Add tour filter to the query
+        if (tourIds.length > 0) {
+            filterQuery.tour = { $in: tourIds }; // ✅ Now this works
+        } else {
+            // No matching tours, return empty result
+            return {
+                data: [],
+                meta: {
+                    page: 1,
+                    limit: 10,
+                    total: 0,
+                    totalPage: 0
+                }
+            };
+        }
+    }
 
     const queryBuilder = new QueryBuilder(
         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
@@ -235,8 +354,8 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
     );
 
     const bookingsData = await queryBuilder
-        .sort()
         .filter()
+        .sort()
         .fields()
         .paginate();
 
@@ -245,13 +364,11 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
         queryBuilder.getMeta()
     ]);
 
-    
     return {
         data,
         meta
     };
 };
-
 
 const updateBookingStatus = async (bookingId: string, status: string, userId: string) => {
 

@@ -131,25 +131,25 @@ const getApplicationsForTourGuide = catchAsync(async (req: Request, res: Respons
 
 
 
-const getMyApplicationsForTourGuide = catchAsync(async (req: Request, res: Response) => {
-    const query = req.query;
+// const getMyApplicationsForTourGuide = catchAsync(async (req: Request, res: Response) => {
+//     const query = req.query;
 
-    // Extract the authenticated user's role
-    const role = (req.user as JwtPayload).role;
+//     // Extract the authenticated user's role
+//     const role = (req.user as JwtPayload).role;
 
-    // Pass the query parameters AND the user's role to the service for validation
-    // The service now returns { data, meta }
-    const result = await GuideService.getApplicationsForTourGuide(query as Record<string, string>, role);
+//     // Pass the query parameters AND the user's role to the service for validation
+//     // The service now returns { data, meta }
+//     const result = await GuideService.getApplicationsForTourGuide(query as Record<string, string>, role);
 
-    // 🛑 Updated to handle { data, meta } from the service result
-    sendResponse(res, {
-        statusCode: 200,
-        success: true,
-        message: 'My guide applications retrieved successfully',
-        data: result.data, // Pass the fetched array of applications
-        meta: result.meta, // Pass the pagination metadata
-    });
-});
+//     // 🛑 Updated to handle { data, meta } from the service result
+//     sendResponse(res, {
+//         statusCode: 200,
+//         success: true,
+//         message: 'My guide applications retrieved successfully',
+//         data: result.data, // Pass the fetched array of applications
+//         meta: result.meta, // Pass the pagination metadata
+//     });
+// });
 
 // const approve = catchAsync(async (req: Request, res: Response) => {
 //     const applicationId = req.params.applicationId;
@@ -175,6 +175,20 @@ const getMyApplicationsForTourGuide = catchAsync(async (req: Request, res: Respo
 //     });
 // });
 
+const getMyApplicationsForTourGuide = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const role = (req.user as JwtPayload).role;
+
+    const result = await GuideService.getMyApplicationsForTourGuide(query as Record<string, string>, role);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'My guide applications retrieved successfully',
+        data: result.data,
+        meta: result.meta,
+    });
+});
 
 
 const updateApplicationStatus = catchAsync(async (req, res) => {

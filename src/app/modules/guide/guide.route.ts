@@ -27,7 +27,7 @@ router.get(
 router.get("/guide-applications", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.getApplicationsForTourGuide);
 
 
-router.get("/guide-application/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.GUIDE), GuideController.getMyApplicationsForTourGuide);
+router.get("/tour-guide-application", checkAuth(Role.GUIDE), GuideController.getMyApplicationsForTourGuide);
 
 // POST /api/v1/tours/:tourId/apply-guide
 router.post(

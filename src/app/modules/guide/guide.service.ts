@@ -365,6 +365,47 @@ const getApplicationsForTourGuide = async (query: Record<string, string>, role: 
     };
 };
 
+
+const getMyApplicationsForTourGuide = async (query: Record<string, string>, role: string) => {
+
+    // 1. 🛑 Role-Based Access Validation
+    if (role !== "ADMIN" && role !== "SUPER_ADMIN" && role !== "GUIDE") {
+        throw new AppError(
+            httpStatus.FORBIDDEN,
+            "You are not authorized to view all guide applications. Access is restricted to Admin and Super Admin roles."
+        );
+    }
+
+    // 2. Setup the base query and QueryBuilder
+    const baseQuery = GuideApplication.find()
+        .populate({ path: "user", select: "name email guideStatus" })
+        .populate({ path: "tour", select: "title slug" });
+
+    const queryBuilder = new QueryBuilder(baseQuery, query);
+
+    // 3. Build the query pipeline
+    const applicationsQuery = queryBuilder
+        .filter() // <-- Handles filtering by any field in the query, including 'status'
+        .sort()
+        .fields()
+        .paginate();
+
+    // 4. Execute the query and get metadata concurrently
+    const [data, meta] = await Promise.all([
+        applicationsQuery.build(),
+        queryBuilder.getMeta()
+    ]);
+
+    // The results will be automatically filtered if the user passes ?status=APPROVED in the query.
+
+    return {
+        data,
+        meta
+    };
+};
+
+
+
 const updateApplicationStatus = async (applicationId: string, status: "APPROVED" | "REJECTED", role: string) => {
 
 
@@ -458,5 +499,6 @@ export const GuideService = {
 
     applyForTourAsGuide,
     getApplicationsForTourGuide,
-    updateApplicationStatus
+    updateApplicationStatus,
+    getMyApplicationsForTourGuide
 };
