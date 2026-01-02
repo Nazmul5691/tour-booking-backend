@@ -3,6 +3,7 @@ export interface ISSLCommerz {
     email: string | undefined;
     phone: string | undefined;
     name: string | undefined;
+    bookingId?: string;
     amount: number;
     transactionId: string;
 }

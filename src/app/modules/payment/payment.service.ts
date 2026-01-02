@@ -67,7 +67,7 @@ const successPayment = async (query: Record<string, string>) => {
 
             status: PAYMENT_STATUS.PAID,
 
-        }, { runValidators: true, session: session })
+        }, { runValidators: true, session: session, new: true })
 
         if (!updatedPayment) {
             throw new AppError(401, "Payment not found")
@@ -141,7 +141,12 @@ const successPayment = async (query: Record<string, string>) => {
         await session.commitTransaction();       //transaction
         session.endSession();
 
-        return { success: true, message: "Payment Completed Successfully" };
+        // return { success: true, message: "Payment Completed Successfully" };
+        return {
+            success: true,
+            message: "Payment Completed Successfully",
+            bookingId: updatedBooking._id.toString() // ✅ Add this
+        };
 
 
     } catch (error) {

@@ -490,6 +490,41 @@ const updateApplicationStatus = async (applicationId: string, status: "APPROVED"
 
 
 
+// const getGuideStats = async (userId: string) => {
+//     const guide = await Guide.findOne({ user: userId });
+
+//     if (!guide) {
+//         throw new AppError(404, "Guide not found");
+//     }
+
+//     // Get application stats
+//     const [
+//         totalApplications,
+//         pendingApplications,
+//         approvedApplications,
+//         rejectedApplications,
+//     ] = await Promise.all([
+//         GuideApplication.countDocuments({ guide: userId }),
+//         GuideApplication.countDocuments({ guide: userId, status: "PENDING" }),
+//         GuideApplication.countDocuments({ guide: userId, status: "APPROVED" }),
+//         GuideApplication.countDocuments({ guide: userId, status: "REJECTED" }),
+//     ]);
+
+//     // Get available tours count
+//     const user = await User.findById(userId);
+//     const availableTours = user?.guideInfo?.availableTours?.length || 0;
+
+//     return {
+//         walletBalance: guide.walletBalance || 0,
+//         totalTours: availableTours,
+//         pendingApplications,
+//         approvedApplications,
+//         rejectedApplications,
+//         totalApplications,
+//         availableTours,
+//     };
+// };
+
 const getGuideStats = async (userId: string) => {
     const guide = await Guide.findOne({ user: userId });
 
@@ -497,17 +532,17 @@ const getGuideStats = async (userId: string) => {
         throw new AppError(404, "Guide not found");
     }
 
-    // Get application stats
+    // Get application stats - FIXED: Changed 'guide' to 'user' field
     const [
         totalApplications,
         pendingApplications,
         approvedApplications,
         rejectedApplications,
     ] = await Promise.all([
-        GuideApplication.countDocuments({ guide: userId }),
-        GuideApplication.countDocuments({ guide: userId, status: "PENDING" }),
-        GuideApplication.countDocuments({ guide: userId, status: "APPROVED" }),
-        GuideApplication.countDocuments({ guide: userId, status: "REJECTED" }),
+        GuideApplication.countDocuments({ user: userId }), // ✅ Changed from 'guide' to 'user'
+        GuideApplication.countDocuments({ user: userId, status: "PENDING" }), // ✅ Changed
+        GuideApplication.countDocuments({ user: userId, status: "APPROVED" }), // ✅ Changed
+        GuideApplication.countDocuments({ user: userId, status: "REJECTED" }), // ✅ Changed
     ]);
 
     // Get available tours count
