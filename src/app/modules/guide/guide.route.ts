@@ -29,6 +29,12 @@ router.get("/guide-applications", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), Guide
 
 router.get("/tour-guide-application", checkAuth(Role.GUIDE), GuideController.getMyApplicationsForTourGuide);
 
+
+
+router.get("/stats", checkAuth(Role.GUIDE), GuideController.getGuideStats);
+router.get("/me", checkAuth(Role.GUIDE), GuideController.getGuideInfo);
+
+
 // POST /api/v1/tours/:tourId/apply-guide
 router.post(
     "/:tourId/apply-guide",

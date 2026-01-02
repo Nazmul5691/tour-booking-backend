@@ -212,6 +212,32 @@ const updateApplicationStatus = catchAsync(async (req, res) => {
 
 
 
+const getGuideStats = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as JwtPayload).userId;
+    const stats = await GuideService.getGuideStats(userId);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Guide stats fetched successfully",
+        data: stats,
+    });
+});
+
+const getGuideInfo = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req.user as JwtPayload).userId;
+    const guide = await GuideService.getGuideInfo(userId);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Guide info fetched successfully",
+        data: guide,
+    });
+});
+
+
+
 export const GuideController = {
     registerGuide,
     getAllGuides,
@@ -222,5 +248,9 @@ export const GuideController = {
     applyForTourAsGuide,
     getApplicationsForTourGuide,
     updateApplicationStatus,
-    getMyApplicationsForTourGuide
+    getMyApplicationsForTourGuide,
+
+
+    getGuideStats,
+    getGuideInfo
 };
