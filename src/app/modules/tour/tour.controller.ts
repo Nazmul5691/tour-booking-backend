@@ -85,15 +85,38 @@ const getSingleTourById = catchAsync(async (req: Request, res: Response) => {
 //         data: result,
 //     });
 // });
+// const updateTour = catchAsync(async (req: Request, res: Response) => {
+//     const files = req.files as Express.Multer.File[] | undefined;
+
+//     const payload: Partial<ITour> = {
+//         ...req.body,
+//         ...(files && files.length > 0
+//             ? { images: files.map(file => file.path) }
+//             : {}),
+//     };
+
+//     const result = await TourService.updateTour(req.params.id, payload);
+
+//     sendResponse(res, {
+//         statusCode: 200,
+//         success: true,
+//         message: "Tour updated successfully",
+//         data: result,
+//     });
+// });
+
 const updateTour = catchAsync(async (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[] | undefined;
 
+    // ✅ FIX: Only add images if files exist and have length
     const payload: Partial<ITour> = {
         ...req.body,
-        ...(files && files.length > 0
-            ? { images: files.map(file => file.path) }
-            : {}),
     };
+
+    // ✅ Only add images to payload if files were actually uploaded
+    if (files && files.length > 0) {
+        payload.images = files.map(file => file.path);
+    }
 
     const result = await TourService.updateTour(req.params.id, payload);
 

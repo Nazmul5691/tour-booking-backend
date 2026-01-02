@@ -323,74 +323,148 @@ const getSingleTourById = async (id: string) => {
 //   return updatedTour;
 // };
 
+// const updateTour = async (id: string, payload: Partial<ITour & { deleteImages?: string | string[] }>) => {
+
+//   const existingTour = await Tour.findById(id);
+//   if (!existingTour) {
+//     throw new Error("Tour not found.");
+//   }
+
+//   // ✅ CRITICAL FIX: Ensure deleteImages is always an array of strings
+//   // The FormData parser (multer) might return a single string if only one item exists.
+//   const deleteImages: string[] = Array.isArray(payload.deleteImages)
+//     ? payload.deleteImages.filter(img => typeof img === 'string')
+//     : typeof payload.deleteImages === 'string'
+//       ? [payload.deleteImages]
+//       : [];
+
+//   // Remove deleteImages from the payload passed to Mongoose
+//   const updatePayload = { ...payload };
+//   delete updatePayload.deleteImages;
+
+
+//   // ---------------------------------
+//   // Slug update
+//   // ---------------------------------
+//   if (updatePayload.title) {
+//     // ... (Slug generation logic - assuming it works) ...
+//     const baseSlug = updatePayload.title.toLowerCase().split(" ").join("-");
+//     let slug = baseSlug;
+//     let counter = 0;
+
+//     while (await Tour.exists({ slug })) {
+//       slug = `${baseSlug}-${counter++}`;
+//     }
+
+//     updatePayload.slug = slug;
+//   }
+
+//   // ---------------------------------
+//   // Merge old & new images
+//   // ---------------------------------
+//   // Multer appends new images to payload.images. Now, merge with existing DB images.
+//   const newUploadedImages = updatePayload.images || [];
+
+//   // Get the existing images that are NOT marked for deletion
+//   const restDBImages = (existingTour.images || []).filter(
+//     (img: string) => !deleteImages.includes(img)
+//   );
+
+//   // Combine remaining old images with newly uploaded images
+//   updatePayload.images = [...restDBImages, ...newUploadedImages];
+
+//   // ---------------------------------
+//   // Update DB
+//   // ---------------------------------
+//   const updatedTour = await Tour.findByIdAndUpdate(id, updatePayload, {
+//     new: true,
+//   });
+
+//   // ---------------------------------
+//   // Delete from Cloudinary
+//   // ---------------------------------
+//   if (deleteImages.length > 0) {
+//     // Assuming deleteImageFromCloudinary is a correct function that takes a URL
+//     await Promise.all(
+//       deleteImages.map((url) => deleteImageFromCLoudinary(url))
+//     );
+//   }
+
+//   return updatedTour;
+// };
+
 const updateTour = async (id: string, payload: Partial<ITour & { deleteImages?: string | string[] }>) => {
 
-  const existingTour = await Tour.findById(id);
-  if (!existingTour) {
-    throw new Error("Tour not found.");
-  }
-
-  // ✅ CRITICAL FIX: Ensure deleteImages is always an array of strings
-  // The FormData parser (multer) might return a single string if only one item exists.
-  const deleteImages: string[] = Array.isArray(payload.deleteImages)
-    ? payload.deleteImages.filter(img => typeof img === 'string')
-    : typeof payload.deleteImages === 'string'
-      ? [payload.deleteImages]
-      : [];
-
-  // Remove deleteImages from the payload passed to Mongoose
-  const updatePayload = { ...payload };
-  delete updatePayload.deleteImages;
-
-
-  // ---------------------------------
-  // Slug update
-  // ---------------------------------
-  if (updatePayload.title) {
-    // ... (Slug generation logic - assuming it works) ...
-    const baseSlug = updatePayload.title.toLowerCase().split(" ").join("-");
-    let slug = baseSlug;
-    let counter = 0;
-
-    while (await Tour.exists({ slug })) {
-      slug = `${baseSlug}-${counter++}`;
+    const existingTour = await Tour.findById(id);
+    if (!existingTour) {
+        throw new Error("Tour not found.");
     }
 
-    updatePayload.slug = slug;
-  }
+    // ✅ Ensure deleteImages is always an array of strings
+    const deleteImages: string[] = Array.isArray(payload.deleteImages)
+        ? payload.deleteImages.filter(img => typeof img === 'string')
+        : typeof payload.deleteImages === 'string'
+            ? [payload.deleteImages]
+            : [];
 
-  // ---------------------------------
-  // Merge old & new images
-  // ---------------------------------
-  // Multer appends new images to payload.images. Now, merge with existing DB images.
-  const newUploadedImages = updatePayload.images || [];
+    // Remove deleteImages from the payload passed to Mongoose
+    const updatePayload = { ...payload };
+    delete updatePayload.deleteImages;
 
-  // Get the existing images that are NOT marked for deletion
-  const restDBImages = (existingTour.images || []).filter(
-    (img: string) => !deleteImages.includes(img)
-  );
+    // ---------------------------------
+    // Slug update
+    // ---------------------------------
+    if (updatePayload.title) {
+        const baseSlug = updatePayload.title.toLowerCase().split(" ").join("-");
+        let slug = baseSlug;
+        let counter = 0;
 
-  // Combine remaining old images with newly uploaded images
-  updatePayload.images = [...restDBImages, ...newUploadedImages];
+        // ✅ FIX: Exclude current tour from slug check
+        while (await Tour.exists({ slug, _id: { $ne: id } })) {
+            slug = `${baseSlug}-${counter++}`;
+        }
 
-  // ---------------------------------
-  // Update DB
-  // ---------------------------------
-  const updatedTour = await Tour.findByIdAndUpdate(id, updatePayload, {
-    new: true,
-  });
+        updatePayload.slug = slug;
+    }
 
-  // ---------------------------------
-  // Delete from Cloudinary
-  // ---------------------------------
-  if (deleteImages.length > 0) {
-    // Assuming deleteImageFromCloudinary is a correct function that takes a URL
-    await Promise.all(
-      deleteImages.map((url) => deleteImageFromCLoudinary(url))
+    // ---------------------------------
+    // Handle images
+    // ---------------------------------
+    const newUploadedImages = updatePayload.images || [];
+
+    // Get existing images that are NOT marked for deletion
+    const restDBImages = (existingTour.images || []).filter(
+        (img: string) => !deleteImages.includes(img)
     );
-  }
 
-  return updatedTour;
+    // ✅ FIX: Only update images if new images were uploaded OR images were deleted
+    if (newUploadedImages.length > 0 || deleteImages.length > 0) {
+        updatePayload.images = [...restDBImages, ...newUploadedImages];
+    } else {
+        // Keep existing images if no changes
+        delete updatePayload.images;
+    }
+
+    // ---------------------------------
+    // Update DB
+    // ---------------------------------
+    const updatedTour = await Tour.findByIdAndUpdate(id, updatePayload, {
+        new: true,
+        runValidators: true,
+    })
+        .populate("tourType")
+        .populate("division");
+
+    // ---------------------------------
+    // Delete from Cloudinary
+    // ---------------------------------
+    if (deleteImages.length > 0) {
+        await Promise.all(
+            deleteImages.map((url) => deleteImageFromCLoudinary(url))
+        );
+    }
+
+    return updatedTour;
 };
 
 
