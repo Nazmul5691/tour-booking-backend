@@ -26,16 +26,8 @@ const initPayment = catchAsync(async (req: Request, res: Response) => {
 
 const successPayment = catchAsync(async (req: Request, res: Response) => {
 
-    // const query = req.query
-    // const result = await PaymentService.successPayment(query as Record<string, string>)
-
-    // if (result.success) {
-    //     res.redirect(`${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}?transactionId=${query.transactionId}&message=${result.message}&amount=${query.amount}&status=${query.status}`)
-    // }
-
     const query = req.query;
     
-    // This now returns { success, message, bookingId }
     const result = await PaymentService.successPayment(query as Record<string, string>);
 
     if (result.success) {
@@ -43,7 +35,7 @@ const successPayment = catchAsync(async (req: Request, res: Response) => {
             `${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}?transactionId=${query.transactionId}&message=${encodeURIComponent(result.message)}&amount=${query.amount}&status=${query.status}&bookingId=${result.bookingId}`
         );
     } else {
-        // Handle failure case
+        
         res.redirect(
             `${envVars.SSL.SSL_FAIL_FRONTEND_URL}?message=${encodeURIComponent(result.message)}&status=failed`
         );

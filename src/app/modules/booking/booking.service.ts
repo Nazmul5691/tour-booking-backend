@@ -15,132 +15,6 @@ import { getTransactionId } from "../../utils/getTransactionId";
 import { Guide } from "../guide/guide.model";
 import { IUser } from "../user/user.interface";
 import { QueryBuilder } from "../../utils/queryBuilder";
-// import { Review } from "../reivew/review.model";
-
-
-
-// const createBooking = async (payload: Partial<IBooking>, userId: string) => {
-//     const transactionId = getTransactionId();
-//     const session = await Booking.startSession();
-//     session.startTransaction();
-
-//     try {
-//         // 1. Check user profile
-//         const user = await User.findById(userId);
-//         if (!user?.phone || !user?.address) {
-//             throw new AppError(httpStatus.BAD_REQUEST, "Please update your profile to book a tour");
-//         }
-
-//         // 2. Find Tour + discount info
-//         const tour = await Tour.findById(payload.tour).select(
-//             "costFrom guides startDate discountDate discountPercentage"
-//         );
-//         if (!tour) throw new AppError(400, "Tour not found");
-
-//         // 3. Check guide
-//         const guideUserId = tour.guides?.[0];
-//         if (!guideUserId) throw new AppError(400, "No guide assigned to this tour");
-
-//         const guide = await Guide.findOne({ user: guideUserId, status: "APPROVED" });
-//         if (!guide) throw new AppError(400, "Guide not approved");
-
-//         // 4. Calculate total amount
-//         const baseAmount = Number(tour.costFrom) * Number(payload.guestCount!);
-
-//         let discountPercentage = 0;
-//         let discountAmount = 0;
-//         let totalAmount = baseAmount;
-
-//         // Apply discount if eligible
-//         if (tour.discountDate && tour.discountPercentage) {
-//             const now = new Date();
-//             const deadline = new Date(tour.discountDate);
-
-//             if (now <= deadline) {
-//                 discountPercentage = Number(tour.discountPercentage);
-//                 discountAmount = (baseAmount * discountPercentage) / 100;
-//                 totalAmount = baseAmount - discountAmount; // user pays discounted amount
-//             }
-//         }
-
-//         // Guide fee
-//         const guideFee = Number(guide.perTourCharge);
-
-//         // Company earning = discounted total - guide fee
-//         const companyEarning = totalAmount - guideFee;
-
-//         // 5. Create booking
-//         const booking = await Booking.create(
-//             [{
-//                 user: userId,
-//                 tour: tour._id,
-//                 status: BOOKING_STATUS.PENDING,
-//                 guide: guide.user,
-//                 guestCount: payload.guestCount,
-//                 baseAmount,
-//                 discountPercentage,
-//                 amountAfterDiscount: totalAmount,          // amount after discount
-//                 guideFee,
-//                 companyEarning,
-//                 ...payload
-//             }],
-//             { session }
-//         );
-
-//         // 6. Create payment
-//         const payment = await Payment.create(
-//             [{
-//                 booking: booking[0]._id,
-//                 status: PAYMENT_STATUS.UNPAID,
-//                 transactionId,
-//                 baseAmount,           // original total before discount (optional, for reference)
-//                 discountPercentage,
-//                 totalAmount,          // required by schema (discounted total)
-//                 amount: totalAmount,  // what user actually pays
-//                 guideFee,
-//                 companyEarning
-//             }],
-//             { session }
-//         );
-
-//         // 7. Attach payment to booking
-//         const updatedBooking = await Booking.findByIdAndUpdate(
-//             booking[0]._id,
-//             { payment: payment[0]._id },
-//             { new: true, session }
-//         )
-//             .populate("user", "name email phone address")
-//             .populate("tour", "title costFrom startDate discountDate discountPercentage")
-//             .populate("payment")
-//             .populate("guide", "name email");
-
-//         // 8. Initialize SSL payment
-//         const userObj = updatedBooking?.user as unknown as IUser;
-//         const sslPayload: ISSLCommerz = {
-//             address: userObj.address,
-//             email: userObj.email,
-//             phone: userObj.phone,
-//             name: userObj.name,
-//             amount: totalAmount,  // user pays discounted total
-//             transactionId
-//         };
-
-//         const sslPayment = await SSLService.sslPaymentInit(sslPayload);
-
-//         await session.commitTransaction();
-//         session.endSession();
-
-//         return {
-//             payment: sslPayment.GatewayPageURL,
-//             booking: updatedBooking
-//         };
-
-//     } catch (error) {
-//         await session.abortTransaction();
-//         session.endSession();
-//         throw error;
-//     }
-// };
 
 
 const createBooking = async (payload: Partial<IBooking>, userId: string) => {
@@ -149,19 +23,19 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     session.startTransaction();
 
     try {
-        // 1. Check user profile
+       
         const user = await User.findById(userId);
         if (!user?.phone || !user?.address) {
             throw new AppError(httpStatus.BAD_REQUEST, "Please update your profile to book a tour");
         }
 
-        // 2. Find Tour + discount info
+        //  Find Tour + discount info
         const tour = await Tour.findById(payload.tour).select(
             "costFrom guides startDate discountDate discountPercentage"
         );
         if (!tour) throw new AppError(400, "Tour not found");
 
-        // 3. Check guide (optional now)
+        // Check guide 
         const guideUserId = tour.guides?.[0];
         let guide = null;
         let guideFee = 0;
@@ -173,7 +47,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             }
         }
 
-        // 4. Calculate total amount
+        
         const baseAmount = Number(tour.costFrom) * Number(payload.guestCount!);
 
         let discountPercentage = 0;
@@ -195,7 +69,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
         // Company earning = discounted total - guide fee
         const companyEarning = totalAmount - guideFee;
 
-        // 5. Create booking
+        //  Create booking
         const bookingData: any = {
             user: userId,
             tour: tour._id,
@@ -216,7 +90,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
         const booking = await Booking.create([bookingData], { session });
 
-        // 6. Create payment
+        //  Create payment
         const payment = await Payment.create(
             [{
                 booking: booking[0]._id,
@@ -232,7 +106,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             { session }
         );
 
-        // 7. Attach payment to booking
+        //  Attach payment to booking
         const populateQuery = Booking.findByIdAndUpdate(
             booking[0]._id,
             { payment: payment[0]._id },
@@ -249,7 +123,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
         const updatedBooking = await populateQuery;
 
-        // 8. Initialize SSL payment
+        // Initialize SSL payment
         const userObj = updatedBooking?.user as unknown as IUser;
         const sslPayload: ISSLCommerz = {
             address: userObj.address,
@@ -280,7 +154,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
 const getAllBookings = async (query: Record<string, string>, role: string) => {
 
-    // 1. 🛑 Role-Based Access Validation
+   
     if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
         throw new AppError(
             httpStatus.FORBIDDEN,
@@ -288,14 +162,14 @@ const getAllBookings = async (query: Record<string, string>, role: string) => {
         );
     }
 
-    // 2. Proceed with Query Building and Data Retrieval
+   
     const queryBuilder = new QueryBuilder(
         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
         query
     );
 
     const bookingsData = await queryBuilder
-        // .search(bookingSearchableFields) // Keeping commented as in original code
+        // .search(bookingSearchableFields) 
         .sort()
         .filter()
         .fields()
@@ -358,284 +232,6 @@ const getBookingById = async (bookingId: string, userId: string, role: string) =
 };
 
 
-// const getMyBookings = async (userId: string, query: Record<string, string>) => {
-
-//     // Force filter by the authenticated user's ID
-//     const filterQuery = {
-//         ...query,
-//         user: userId, // <-- Enforces ownership: only data belonging to this userId is fetched
-//     };
-
-//     const queryBuilder = new QueryBuilder(
-//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
-//         filterQuery
-//     );
-
-//     const searchableFields = ['tour.title', 'tour.location'];
-
-//     const bookingsData = await queryBuilder
-//         .search(searchableFields)  
-//         .sort()
-//         .filter()
-//         .fields()
-//         .paginate();
-
-//     const [data, meta] = await Promise.all([
-//         bookingsData.build(),
-//         queryBuilder.getMeta()
-//     ]);
-
-
-//     return {
-//         data,
-//         meta
-//     };
-// };
-// const getMyBookings = async (userId: string, query: Record<string, string>) => {
-//     const filterQuery = {
-//         ...query,
-//         user: userId,
-//     };
-
-//     // If there's a searchTerm, we need to find matching tours first
-//     let tourIds: any[] = [];
-//     if (query.searchTerm) {
-//         const tours = await Tour.find({
-//             $or: [
-//                 { title: { $regex: query.searchTerm, $options: 'i' } },
-//                 { location: { $regex: query.searchTerm, $options: 'i' } }
-//             ]
-//         }).select('_id');
-
-//         tourIds = tours.map(t => t._id);
-
-//         // Add tour filter to the query
-//         if (tourIds.length > 0) {
-//             filterQuery.tour = { $in: tourIds };
-//         } else {
-//             // No matching tours, return empty result
-//             return {
-//                 data: [],
-//                 meta: {
-//                     page: 1,
-//                     limit: 10,
-//                     total: 0,
-//                     totalPage: 0
-//                 }
-//             };
-//         }
-//     }
-
-//     const queryBuilder = new QueryBuilder(
-//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
-//         filterQuery
-//     );
-
-//     const bookingsData = await queryBuilder
-//         .filter()
-//         .sort()
-//         .fields()
-//         .paginate();
-
-//     const [data, meta] = await Promise.all([
-//         bookingsData.build(),
-//         queryBuilder.getMeta()
-//     ]);
-
-//     return {
-//         data,
-//         meta
-//     };
-// };
-
-// const getMyBookings = async (userId: string, query: Record<string, string>) => {
-//     // ✅ FIX: Explicitly type filterQuery to allow dynamic properties
-//     const filterQuery: Record<string, any> = {
-//         ...query,
-//         user: userId,
-//     };
-
-//     // If there's a searchTerm, we need to find matching tours first
-//     let tourIds: any[] = [];
-//     if (query.searchTerm) {
-//         const tours = await Tour.find({
-//             $or: [
-//                 { title: { $regex: query.searchTerm, $options: 'i' } },
-//                 { location: { $regex: query.searchTerm, $options: 'i' } }
-//             ]
-//         }).select('_id');
-
-//         tourIds = tours.map(t => t._id);
-
-//         // Add tour filter to the query
-//         if (tourIds.length > 0) {
-//             filterQuery.tour = { $in: tourIds }; // ✅ Now this works
-//         } else {
-//             // No matching tours, return empty result
-//             return {
-//                 data: [],
-//                 meta: {
-//                     page: 1,
-//                     limit: 10,
-//                     total: 0,
-//                     totalPage: 0
-//                 }
-//             };
-//         }
-//     }
-
-//     const queryBuilder = new QueryBuilder(
-//         Booking.find().populate('user', 'name email').populate('tour', 'title slug location'),
-//         filterQuery
-//     );
-
-//     const bookingsData = await queryBuilder
-//         .filter()
-//         .sort()
-//         .fields()
-//         .paginate();
-
-//     const [data, meta] = await Promise.all([
-//         bookingsData.build(),
-//         queryBuilder.getMeta()
-//     ]);
-
-//     return {
-//         data,
-//         meta
-//     };
-// };
-
-// const getMyBookings = async (userId: string, query: Record<string, string>) => {
-//     const filterQuery: Record<string, any> = {
-//         ...query,
-//         user: userId,
-//     };
-
-//     let tourIds: any[] = [];
-//     if (query.searchTerm) {
-//         const tours = await Tour.find({
-//             $or: [
-//                 { title: { $regex: query.searchTerm, $options: 'i' } },
-//                 { location: { $regex: query.searchTerm, $options: 'i' } }
-//             ]
-//         }).select('_id');
-
-//         tourIds = tours.map(t => t._id);
-
-//         if (tourIds.length > 0) {
-//             filterQuery.tour = { $in: tourIds };
-//         } else {
-//             return {
-//                 data: [],
-//                 meta: {
-//                     page: 1,
-//                     limit: 10,
-//                     total: 0,
-//                     totalPage: 0
-//                 }
-//             };
-//         }
-//     }
-
-//     const queryBuilder = new QueryBuilder(
-//         Booking.find()
-//             .populate('user', 'name email')
-//             .populate('tour', 'title slug location startDate') // ✅ startDate added
-//             .populate('payment', 'status amount transactionId invoiceUrl'), // ✅ payment populate করলাম
-//         filterQuery
-//     );
-
-//     const bookingsData = await queryBuilder
-//         .filter()
-//         .sort()
-//         .fields()
-//         .paginate();
-
-//     const [data, meta] = await Promise.all([
-//         bookingsData.build(),
-//         queryBuilder.getMeta()
-//     ]);
-
-//     return {
-//         data,
-//         meta
-//     };
-// };
-
-
-// const getMyBookings = async (userId: string, query: Record<string, string>) => {
-//     const filterQuery: Record<string, any> = {
-//         ...query,
-//         user: userId,
-//     };
-
-//     let tourIds: any[] = [];
-//     if (query.searchTerm) {
-//         const tours = await Tour.find({
-//             $or: [
-//                 { title: { $regex: query.searchTerm, $options: 'i' } },
-//                 { location: { $regex: query.searchTerm, $options: 'i' } }
-//             ]
-//         }).select('_id');
-
-//         tourIds = tours.map(t => t._id);
-
-//         if (tourIds.length > 0) {
-//             filterQuery.tour = { $in: tourIds };
-//         } else {
-//             return {
-//                 data: [],
-//                 meta: {
-//                     page: 1,
-//                     limit: 10,
-//                     total: 0,
-//                     totalPage: 0
-//                 }
-//             };
-//         }
-//     }
-
-//     const queryBuilder = new QueryBuilder(
-//         Booking.find()
-//             .populate('user', 'name email')
-//             .populate('tour', 'title slug location startDate images') // ✅ images added
-//             .populate('payment', 'status amount transactionId invoiceUrl'),
-//         filterQuery
-//     );
-
-//     const bookingsData = await queryBuilder
-//         .filter()
-//         .sort()
-//         .fields()
-//         .paginate();
-
-//     const [bookings, meta] = await Promise.all([
-//         bookingsData.build(),
-//         queryBuilder.getMeta()
-//     ]);
-
-//     // ✅ CHECK IF EACH BOOKING HAS A REVIEW
-//     const bookingsWithReviewStatus = await Promise.all(
-//         bookings.map(async (booking: any) => {
-//             const hasReview = await Review.exists({
-//                 booking: booking._id,
-//                 user: userId,
-//                 targetType: "TOUR"
-//             });
-
-//             return {
-//                 ...booking.toObject(),
-//                 hasReview: !!hasReview // Convert to boolean
-//             };
-//         })
-//     );
-
-//     return {
-//         data: bookingsWithReviewStatus,
-//         meta
-//     };
-// };
 
 const getMyBookings = async (userId: string, query: Record<string, string>) => {
     const filterQuery: Record<string, any> = {
@@ -688,21 +284,19 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
         queryBuilder.getMeta()
     ]);
 
-    // ❌ Remove this - hasReview already in schema
-    // const bookingsWithReviewStatus = ...
+    
 
     return {
-        data, // ✅ Direct return - hasReview already included
+        data, 
         meta
     };
 };
 
 
 
-
 const updateBookingStatus = async (bookingId: string, status: string, userId: string) => {
 
-    // 1. Find the existing booking
+    //  Find the existing booking
     const existingBooking = await Booking.findById(bookingId);
 
     if (!existingBooking) {
@@ -711,7 +305,7 @@ const updateBookingStatus = async (bookingId: string, status: string, userId: st
 
     const bookingOwnerId = existingBooking.user.toString();
 
-    // 2. STRICT Ownership Check
+    //  Ownership Check
     // Check if the authenticated user (userId) is the one who created the booking (bookingOwnerId)
     if (bookingOwnerId !== userId) {
         throw new AppError(
@@ -720,7 +314,7 @@ const updateBookingStatus = async (bookingId: string, status: string, userId: st
         );
     }
 
-    // 3. Status Validation (Assuming the owner can only CANCEL their booking)
+    //  Status Validation (Assuming the owner can only CANCEL their booking)
     // If the owner can change the status, it is usually only to CANCELLED.
     if (status !== "CANCEL") {
         throw new AppError(
@@ -729,7 +323,7 @@ const updateBookingStatus = async (bookingId: string, status: string, userId: st
         );
     }
 
-    // 4. Perform the update
+    //  Perform the update
     const updatedBooking = await Booking.findByIdAndUpdate(
         bookingId,
         { status },
@@ -754,7 +348,7 @@ export const BookingService = {
     getAllBookings,
     getMyBookings,
     getBookingById,
-    updateBookingStatus,
+    updateBookingStatus
 }
 
 

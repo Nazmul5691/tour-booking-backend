@@ -17,18 +17,26 @@ router.post("/forgot-password", AuthControllers.forgotPassword)
 router.post("/forgot-password-reset", AuthControllers.forgotPasswordReset)
 router.post("/reset-password", checkAuth(...Object.values(Role)), AuthControllers.resetPassword)
 
-// Frontend -> forget-password -> email -> user status check -> short expiration token (valid for 10 min) -> email -> Fronted Link http://localhost:5173/reset-password?email=saminisrar1@gmail.com&token=token -> frontend e  query theke user er email and token extract anbo -> new password user theke nibe -> backend er /reset-password api -> authorization = token -> newPassword -> token verify -> password hash -> save user password   
+
+
 
 
 //  /booking -> /login -> successful google login -> /booking frontend
 // /login -> successful google login -> / frontend
 router.get("/google", async (req: Request, res: Response, next: NextFunction) => {
     const redirect = req.query.redirect || "/"
-    // console.log('token error');
     passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account", state: redirect as string })(req, res, next)
 })
+
+
 
 // api/v1/auth/google/callback?state=/booking
 router.get("/google/callback", passport.authenticate("google", {failureRedirect: `${envVars.FRONTEND_URL}/login?error=There is some issues with your account. Please contact out support team!`}), AuthControllers.googleCallbackController)
 
 export const AuthRouters = router;
+
+
+
+
+
+// Frontend -> forget-password -> email -> user status check -> short expiration token (valid for 10 min) -> email -> Fronted Link http://localhost:5173/reset-password?email=saminisrar1@gmail.com&token=token -> frontend e  query theke user er email and token extract anbo -> new password user theke nibe -> backend er /reset-password api -> authorization = token -> newPassword -> token verify -> password hash -> save user password   

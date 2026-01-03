@@ -43,10 +43,7 @@ const reviewSchema = new Schema<IReview>(
     }
 );
 
-// Prevent duplicate review for same booking + target
-// reviewSchema.index({ booking: 1, targetType: 1 }, { unique: true });
 
-// Prevent multiple guide reviews for the same booking
 reviewSchema.index({ booking: 1, guide: 1 }, { unique: true });
 
 // Prevent multiple tour reviews for the same booking

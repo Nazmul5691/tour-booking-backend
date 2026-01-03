@@ -7,11 +7,11 @@ export enum REVIEW_TARGET {
 
 export interface IReview {
   user: Types.ObjectId;
-  booking?: Types.ObjectId;   // link to booking (to ensure only booked users review)
-  targetType: REVIEW_TARGET;  // TOUR or GUIDE
-  tour?: Types.ObjectId;      // required if TOUR
-  guide?: Types.ObjectId;     // required if GUIDE
-  rating: number;             // 1-5
+  booking?: Types.ObjectId;  
+  targetType: REVIEW_TARGET;
+  tour?: Types.ObjectId;      
+  guide?: Types.ObjectId;     
+  rating: number;             
   comment?: string;
   createdAt?: Date;
 }

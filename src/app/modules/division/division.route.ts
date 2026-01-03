@@ -10,14 +10,6 @@ import { multerUpload } from "../../config/multer.cofig";
 const router = Router()
 
 
-/*
- {
- file : Image
- data : body text data => req.body => req.body.data
- }
-*/
-// Form data -> body, file
-
 
 router.post(
     "/create",
@@ -28,7 +20,9 @@ router.post(
 );
 
 router.get("/", DivisionController.getAllDivisions);
+
 router.get("/:slug", DivisionController.getSingleDivision)
+
 router.patch(
     "/:id",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
@@ -36,6 +30,9 @@ router.patch(
     validateRequest(updateDivisionSchema),
     DivisionController.updateDivision
 );
+
 router.delete("/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), DivisionController.deleteDivision);
 
 export const DivisionRoutes = router;
+
+

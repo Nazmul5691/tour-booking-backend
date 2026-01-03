@@ -7,8 +7,6 @@ import { User } from "../modules/user/user.model";
 import { IsActive, Role } from "../modules/user/user.interface";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcryptjs from 'bcryptjs';
-// import AppError from "../errorHelpers/appError";
-// import httpStatus from 'http-status-codes'
 
 
 
@@ -23,20 +21,15 @@ passport.use(
 
                 const isUserExit = await User.findOne({ email });
 
-                // if (!isUserExit) {
-                //     return done(null, false, { message: "User does not exist" })
-                // }
 
                 if (!isUserExit) {
                     return done("User does not exist")
                 }
 
                 if (!isUserExit.isVerified) {
-                    // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified")
                     return done("User does not verified")
                 }
                 if (isUserExit.isActive === IsActive.BLOCKED || isUserExit.isActive === IsActive.INACTIVE) {
-                    // throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExit.isActive}`)
                     return done(`User is ${isUserExit.isActive}`)
                 }
                 if (isUserExit.isDeleted) {
@@ -131,12 +124,6 @@ passport.use(
 
 
 
-// frontend localhost:5173/login?redirect=/booking -> localhost:5000/api/v1/auth/google?redirect=/booking -> passport -> Google OAuth Consent -> gmail login -> successful -> callback url localhost:5000/api/v1/auth/google/callback -> db store -> token
-
-// Bridge == Google -> user db store -> token
-//Custom -> email , password, role : USER, name... -> registration -> DB -> 1 User create
-//Google -> req -> google -> successful : Jwt Token : Role , email -> DB - Store -> token - api access
-
 
 
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
@@ -154,3 +141,5 @@ passport.deserializeUser(async (id: string, done: any) => {
         done(error)
     }
 })
+
+

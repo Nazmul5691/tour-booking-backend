@@ -3,12 +3,6 @@
 
 
 
-// Frontend-> Form Data with Image File -> Multer -> Form data -> Req (Body + File)
-// Amader folder -> image -> form data -> File -> Multer -> Amader project / pc te Nijer ekta folder(temporary) -> Req.file
-//req.file -> cloudinary(req.file) -> url -> mongoose -> mongodb
-
-
-
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import { envVars } from "./env";
 import AppError from "../errorHelpers/appError";
@@ -84,9 +78,18 @@ export const deleteImageFromCLoudinary = async (url: string) => {
 export const cloudinaryUpload = cloudinary
 
 
+
+
+
 // const uploadToCloudinary = cloudinary.uploader.upload()
 
 
 
 //Multer storage cloudinary
 //Amader folder -> image -> form data -> File -> Multer -> storage in cloudinary -> url ->  req.file  -> url  -> mongoose -> mongodb
+
+
+
+// Frontend-> Form Data with Image File -> Multer -> Form data -> Req (Body + File)
+// Amader folder -> image -> form data -> File -> Multer -> Amader project / pc te Nijer ekta folder(temporary) -> Req.file
+//req.file -> cloudinary(req.file) -> url -> mongoose -> mongodb

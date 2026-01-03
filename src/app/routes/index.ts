@@ -61,6 +61,3 @@ modulesRoutes.forEach((route) => {
 })
 
 
-// router.use("/user", UserRoutes)
-// router.use("/tour", TourRoutes)
-// router.use("/booking", BookingRoutes)

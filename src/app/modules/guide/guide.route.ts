@@ -7,6 +7,7 @@ import { Role } from "../user/user.interface";
 
 const router = Router();
 
+
 // logged in USER can apply to become a guide
 router.post(
     "/register-guide",
@@ -45,11 +46,6 @@ router.post(
 
 
 
-// Admin: approve - approve a guide application 
-// router.patch("/guide-applications/:applicationId/approve", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.approve);
-
-// // Admin: reject
-// router.patch("/guide-applications/:applicationId/reject", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.reject);
 
 router.patch(
     "/guide-applications/:id",
@@ -72,10 +68,6 @@ router.patch(
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
     GuideController.updateGuideStatus
 )
-
-
-
-// router.get("/available-tours", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), GuideController.getApplicationsForTourGuide);
 
 
 

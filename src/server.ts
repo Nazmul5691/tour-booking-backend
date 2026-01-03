@@ -69,25 +69,8 @@ process.on("SIGTERM", () => {
 })
 
 
-// process.on("SIGINT", (err) =>{
-//     console.log("SIGINT Signal received... Server shutting down...");
 
-//     if(server){
-//         server.close(()=>{
-//             process.exit(1)
-//         })
-//     }
 
-//     process.exit(1)
-// })
 
-// Unhandled Rejection error
-// Promise.reject(new Error("I forgot to catch this promise"))
-
-// Uncaught Exception error
-// throw new Error("I forgot to catch this local error")
-
-// Uncaught Exception error
-// throw new Error("I forgot to catch this local error")
 
 

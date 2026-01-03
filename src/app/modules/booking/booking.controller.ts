@@ -24,10 +24,9 @@ const createBooking = catchAsync(async (req: Request, res: Response) => {
 const getAllBookings = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     
-    // Extract the authenticated user's role
+    
     const role = (req.user as JwtPayload).role;
-
-    // Pass the query parameters AND the user's role to the service
+    
     const result = await BookingService.getAllBookings(query as Record<string, string>, role);
 
     sendResponse(res, {
@@ -62,11 +61,11 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
 
 const getMyBookings = catchAsync(async (req: Request, res: Response) => {
     
-    // Get the authenticated user's ID from the JWT payload
+    
     const userId = (req.user as JwtPayload).userId; 
     const query = req.query;
 
-    // Pass the userId to the service, which enforces the ownership filter
+   
     const result = await BookingService.getMyBookings(userId, query as Record<string, string>);
 
     sendResponse(res, {
@@ -83,11 +82,10 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
     const { bookingId } = req.params;
     const { status } = req.body;
     
-    // 1. Extract the ID of the authenticated user from the JWT payload
+    
     const userId = (req.user as JwtPayload).userId; 
 
-    // 2. Pass bookingId, new status, and userId to the service.
-    // The service handles: finding the booking, checking ownership (userId), and validating the status change.
+    
     const updatedBooking = await BookingService.updateBookingStatus(bookingId, status, userId);
 
     sendResponse(res, {

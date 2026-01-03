@@ -5,15 +5,3 @@ export interface IDivision {
     description?: string
 }
 
-/**
- * division name = Chattogram Division
- * 
- * slug = chattogram-division
- * 
- * /:id => /efwl432qgyqahwe
- * 
- * /:id => 
- * 
- * /:slug => /division/chattogram-division
- * 
- */

@@ -5,10 +5,7 @@ import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 
 
-
-
 const router = Router();
-
 
 
 router.post("/init-payment/:bookingId", PaymentController.initPayment);

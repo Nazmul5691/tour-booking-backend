@@ -14,7 +14,9 @@ const router = express.Router();
 
 
 
-/* ------------------ TOUR TYPE ROUTES -------------------- */
+
+
+//tour type routes
 router.get("/tour-types", TourController.getAllTourTypes);
 
 
@@ -43,7 +45,7 @@ router.delete("/tour-types/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), TourCo
 
 
 
-/* --------------------- TOUR ROUTES ---------------------- */
+// tour routes
 router.get("/", TourController.getAllTours);
 
 

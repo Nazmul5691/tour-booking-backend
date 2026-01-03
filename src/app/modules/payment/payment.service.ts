@@ -33,7 +33,7 @@ const initPayment = async (bookingId: string) => {
     const userPhoneNumber = (booking?.user as any).phone;
     const userName = (booking?.user as any).name
 
-    // console.log(userName);
+   
 
 
     const sslPayload: ISSLCommerz = {
@@ -45,7 +45,7 @@ const initPayment = async (bookingId: string) => {
         transactionId: payment.transactionId
     }
 
-    // console.log('after',sslPayload.name);
+    
 
     const sslPayment = await SSLService.sslPaymentInit(sslPayload);
 
@@ -57,8 +57,7 @@ const initPayment = async (bookingId: string) => {
 
 const successPayment = async (query: Record<string, string>) => {
 
-    // Update Booking Status to Confirm 
-    // Update Payment Status to PAID
+    
     const session = await Booking.startSession();
     session.startTransaction();
 
@@ -89,10 +88,10 @@ const successPayment = async (query: Record<string, string>) => {
         }
 
 
-        // ⭐⭐⭐⭐⭐ GUIDE WALLET UPDATE — ONLY NEW PART ⭐⭐⭐⭐⭐
+        // GUIDE WALLET UPDATE 
         if (updatedBooking.guide && updatedBooking.guideFee) {
             await Guide.findOneAndUpdate(
-                { user: updatedBooking.guide },           // guide.user stored here
+                { user: updatedBooking.guide },         
                 { $inc: { walletBalance: updatedBooking.guideFee } },
                 { session }
             );
@@ -138,126 +137,29 @@ const successPayment = async (query: Record<string, string>) => {
             ]
         })
 
-        await session.commitTransaction();       //transaction
+        await session.commitTransaction();      
         session.endSession();
 
         // return { success: true, message: "Payment Completed Successfully" };
         return {
             success: true,
             message: "Payment Completed Successfully",
-            bookingId: updatedBooking._id.toString() // ✅ Add this
+            bookingId: updatedBooking._id.toString() 
         };
 
 
     } catch (error) {
-        await session.abortTransaction();        //rollBack
+        await session.abortTransaction();     
         session.endSession();
         throw error;
     }
 };
 
 
-// const successPayment = async (query: Record<string, string>) => {
-
-//     const session = await Booking.startSession();
-//     session.startTransaction();
-
-//     try {
-//         // 1. Update Payment status
-//         const updatedPayment = await Payment.findOneAndUpdate(
-//             { transactionId: query.transactionId },
-//             { status: PAYMENT_STATUS.PAID },
-//             { new: true, runValidators: true, session }
-//         );
-
-//         if (!updatedPayment) {
-//             throw new AppError(401, "Payment not found");
-//         }
-
-//         // 2. Update Booking status
-//         const updatedBooking = await Booking.findByIdAndUpdate(
-//             updatedPayment.booking,
-//             { status: BOOKING_STATUS.COMPLETE },
-//             { new: true, runValidators: true, session }
-//         )
-//             .populate("tour", "title")
-//             .populate("user", "name email")
-//             .populate("guide"); // IMPORTANT: Added populate guide here
-
-//         if (!updatedBooking) {
-//             throw new AppError(401, "Booking not found");
-//         }
-
-//         // 3. ⭐ ADD GUIDE WALLET UPDATE LOGIC HERE ⭐
-//         const guideUserId = updatedBooking.guide; // guide.user ObjectId already stored
-
-//         await Guide.findOneAndUpdate(
-//             { user: guideUserId },              // Match by Guide.user
-//             { $inc: { walletBalance: updatedBooking.guideFee } }, // Add guide fee
-//             { session }
-//         );
-
-//         // console.log("Guide wallet updated +", updatedBooking.guideFee);
-
-//         // 4. Generate invoice
-//         const invoiceData: IInvoiceData = {
-//             bookingDate: updatedBooking.createdAt as Date,
-//             guestCount: updatedBooking.guestCount,
-//             totalAmount: updatedPayment.amount,   // FIXED
-//             tourTitle: (updatedBooking.tour as any).title,
-//             transactionId: updatedPayment.transactionId,
-//             userName: (updatedBooking.user as any).name
-//         };
-
-//         const pdfBuffer = await generatePdf(invoiceData);
-
-//         const cloudinaryResult = await uploadBufferToCloudinary(pdfBuffer, "invoice");
-
-//         if (!cloudinaryResult) {
-//             throw new AppError(401, "Error uploading pdf");
-//         }
-
-//         // 5. Add Invoice URL
-//         await Payment.findByIdAndUpdate(
-//             updatedPayment._id,
-//             { invoiceUrl: cloudinaryResult.secure_url },
-//             { runValidators: true, session }
-//         );
-
-//         // 6. Email invoice
-//         await sendEmail({
-//             to: (updatedBooking.user as any).email,
-//             subject: "Your Booking Invoice",
-//             templateName: "invoice",
-//             templateData: invoiceData,
-//             attachments: [
-//                 {
-//                     filename: "invoice.pdf",
-//                     content: pdfBuffer,
-//                     contentType: "application/pdf"
-//                 }
-//             ]
-//         });
-
-//         // 7. Commit transaction
-//         await session.commitTransaction();
-//         session.endSession();
-
-//         return { success: true, message: "Payment Completed Successfully" };
-
-//     } catch (error) {
-//         await session.abortTransaction();
-//         session.endSession();
-//         throw error;
-//     }
-// };
-
-
 
 
 const failPayment = async (query: Record<string, string>) => {
-    // Update Booking Status to fail 
-    // Update Payment Status to fail
+    
 
     const session = await Booking.startSession();
     session.startTransaction();
@@ -278,13 +180,13 @@ const failPayment = async (query: Record<string, string>) => {
                 { runValidators: true, session }
             )
 
-        await session.commitTransaction();       //transaction
+        await session.commitTransaction();      
         session.endSession();
 
         return { success: false, message: "Payment failed" };
 
     } catch (error) {
-        await session.abortTransaction();        //rollBack
+        await session.abortTransaction();       
         session.endSession();
         throw error;
     }
@@ -292,8 +194,7 @@ const failPayment = async (query: Record<string, string>) => {
 
 
 const cancelPayment = async (query: Record<string, string>) => {
-    // Update Booking Status to cancel 
-    // Update Payment Status to cancel
+   
     const session = await Booking.startSession();
     session.startTransaction();
 
@@ -312,13 +213,13 @@ const cancelPayment = async (query: Record<string, string>) => {
                 { runValidators: true, session }
             )
 
-        await session.commitTransaction();       //transaction
+        await session.commitTransaction();       
         session.endSession();
 
         return { success: false, message: "Payment cancelled" };
 
     } catch (error) {
-        await session.abortTransaction();        //rollBack
+        await session.abortTransaction();       
         session.endSession();
         throw error;
     }

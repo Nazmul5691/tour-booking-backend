@@ -11,17 +11,6 @@ import { divisionSearchableFields } from "../division/division.constant";
 import { userSearchableFields } from "./user.constant";
 
 
-// const createUser = async (payload: Partial<IUser>) =>{
-
-//     const {name, email}  = payload;
-
-//         const user = await User.create({
-//             name, 
-//             email
-//         })
-
-//         return user;
-// }
 
 
 
@@ -82,10 +71,9 @@ const createAdmin = async (payload: Partial<IUser>) => {
 
 const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
 
-    /**
-     * email - can not change
-     * only name, phone,  address
-     */
+    
+     // email - can not change
+     // only name, phone,  address
 
     if (decodedToken.role === Role.USER || decodedToken.role === Role.GUIDE) {
         if (userId !== decodedToken.userId) {
@@ -137,20 +125,6 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
 }
 
 
-// get all users
-// const getAllUsers = async () => {
-//     const users = await User.find();
-
-//     const totalUsers = await User.countDocuments()
-
-//     return {
-//         data: users,
-//         meta: {
-//             total: totalUsers
-//         }
-//     };
-// }
-
 
 
 const getAllUsers = async (query: Record<string, string>) => {
@@ -199,31 +173,7 @@ const deleteUser = async (id: string) => {
     return null;
 
 }
-// const deleteAdmin = async (id: string) => {
-//     const user = await User.findByIdAndDelete(id);
 
-//     return null;
-
-// }
-
-
-// const deleteAdmin = async (id: string) => {
-//     const user = await User.findById(id);
-
-//     if (!user) {
-//         throw new AppError(httpStatus.NOT_FOUND, "User not found");
-//     }
-
-//     if (user.role !== Role.SUPER_ADMIN) {
-//         throw new AppError(
-//             httpStatus.BAD_REQUEST,
-//             "Only super admin can delete and admin"
-//         );
-//     }
-
-//     await User.findByIdAndDelete(id);
-//     return null;
-// };
 
 
 export const deleteAdminService = async (id: string, decodedToken: JwtPayload) => {
@@ -294,3 +244,23 @@ export const UserServices = {
     updateUserStatusService,
     deleteAdminService
 }
+
+
+
+
+
+
+
+
+
+// const createUser = async (payload: Partial<IUser>) =>{
+
+//     const {name, email}  = payload;
+
+//         const user = await User.create({
+//             name, 
+//             email
+//         })
+
+//         return user;
+// }

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
 import { Query } from "mongoose";
-import { excludeField } from "../constants"; // Assuming excludeField is where 'page', 'limit', 'sort', etc. are stored
+import { excludeField } from "../constants"; 
+
 
 export class QueryBuilder<T> {
     public modelQuery: Query<T[], T>;
