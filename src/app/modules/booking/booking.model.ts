@@ -49,6 +49,10 @@ const bookingSchema = new Schema<IBooking>(
         },
         companyEarning: {
             type: Number
+        },
+        hasReview: {
+            type: Boolean,
+            default: false
         }
     },
     {

@@ -15,6 +15,7 @@ import { getTransactionId } from "../../utils/getTransactionId";
 import { Guide } from "../guide/guide.model";
 import { IUser } from "../user/user.interface";
 import { QueryBuilder } from "../../utils/queryBuilder";
+// import { Review } from "../reivew/review.model";
 
 
 
@@ -505,6 +506,137 @@ const getBookingById = async (bookingId: string, userId: string, role: string) =
 //     };
 // };
 
+// const getMyBookings = async (userId: string, query: Record<string, string>) => {
+//     const filterQuery: Record<string, any> = {
+//         ...query,
+//         user: userId,
+//     };
+
+//     let tourIds: any[] = [];
+//     if (query.searchTerm) {
+//         const tours = await Tour.find({
+//             $or: [
+//                 { title: { $regex: query.searchTerm, $options: 'i' } },
+//                 { location: { $regex: query.searchTerm, $options: 'i' } }
+//             ]
+//         }).select('_id');
+
+//         tourIds = tours.map(t => t._id);
+
+//         if (tourIds.length > 0) {
+//             filterQuery.tour = { $in: tourIds };
+//         } else {
+//             return {
+//                 data: [],
+//                 meta: {
+//                     page: 1,
+//                     limit: 10,
+//                     total: 0,
+//                     totalPage: 0
+//                 }
+//             };
+//         }
+//     }
+
+//     const queryBuilder = new QueryBuilder(
+//         Booking.find()
+//             .populate('user', 'name email')
+//             .populate('tour', 'title slug location startDate') // ✅ startDate added
+//             .populate('payment', 'status amount transactionId invoiceUrl'), // ✅ payment populate করলাম
+//         filterQuery
+//     );
+
+//     const bookingsData = await queryBuilder
+//         .filter()
+//         .sort()
+//         .fields()
+//         .paginate();
+
+//     const [data, meta] = await Promise.all([
+//         bookingsData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     return {
+//         data,
+//         meta
+//     };
+// };
+
+
+// const getMyBookings = async (userId: string, query: Record<string, string>) => {
+//     const filterQuery: Record<string, any> = {
+//         ...query,
+//         user: userId,
+//     };
+
+//     let tourIds: any[] = [];
+//     if (query.searchTerm) {
+//         const tours = await Tour.find({
+//             $or: [
+//                 { title: { $regex: query.searchTerm, $options: 'i' } },
+//                 { location: { $regex: query.searchTerm, $options: 'i' } }
+//             ]
+//         }).select('_id');
+
+//         tourIds = tours.map(t => t._id);
+
+//         if (tourIds.length > 0) {
+//             filterQuery.tour = { $in: tourIds };
+//         } else {
+//             return {
+//                 data: [],
+//                 meta: {
+//                     page: 1,
+//                     limit: 10,
+//                     total: 0,
+//                     totalPage: 0
+//                 }
+//             };
+//         }
+//     }
+
+//     const queryBuilder = new QueryBuilder(
+//         Booking.find()
+//             .populate('user', 'name email')
+//             .populate('tour', 'title slug location startDate images') // ✅ images added
+//             .populate('payment', 'status amount transactionId invoiceUrl'),
+//         filterQuery
+//     );
+
+//     const bookingsData = await queryBuilder
+//         .filter()
+//         .sort()
+//         .fields()
+//         .paginate();
+
+//     const [bookings, meta] = await Promise.all([
+//         bookingsData.build(),
+//         queryBuilder.getMeta()
+//     ]);
+
+//     // ✅ CHECK IF EACH BOOKING HAS A REVIEW
+//     const bookingsWithReviewStatus = await Promise.all(
+//         bookings.map(async (booking: any) => {
+//             const hasReview = await Review.exists({
+//                 booking: booking._id,
+//                 user: userId,
+//                 targetType: "TOUR"
+//             });
+
+//             return {
+//                 ...booking.toObject(),
+//                 hasReview: !!hasReview // Convert to boolean
+//             };
+//         })
+//     );
+
+//     return {
+//         data: bookingsWithReviewStatus,
+//         meta
+//     };
+// };
+
 const getMyBookings = async (userId: string, query: Record<string, string>) => {
     const filterQuery: Record<string, any> = {
         ...query,
@@ -540,8 +672,8 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
     const queryBuilder = new QueryBuilder(
         Booking.find()
             .populate('user', 'name email')
-            .populate('tour', 'title slug location startDate') // ✅ startDate added
-            .populate('payment', 'status amount transactionId invoiceUrl'), // ✅ payment populate করলাম
+            .populate('tour', 'title slug location startDate images')
+            .populate('payment', 'status amount transactionId invoiceUrl'),
         filterQuery
     );
 
@@ -556,11 +688,17 @@ const getMyBookings = async (userId: string, query: Record<string, string>) => {
         queryBuilder.getMeta()
     ]);
 
+    // ❌ Remove this - hasReview already in schema
+    // const bookingsWithReviewStatus = ...
+
     return {
-        data,
+        data, // ✅ Direct return - hasReview already included
         meta
     };
 };
+
+
+
 
 const updateBookingStatus = async (bookingId: string, status: string, userId: string) => {
 

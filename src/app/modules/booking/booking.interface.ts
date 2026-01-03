@@ -20,5 +20,6 @@ export interface IBooking {
     guide?: Types.ObjectId;
     guideFee?: number;
     companyEarning?: number;
-    createdAt?: Date 
+    createdAt?: Date;
+    hasReview?: boolean; 
 }

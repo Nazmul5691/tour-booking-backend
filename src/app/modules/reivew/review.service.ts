@@ -58,6 +58,45 @@ import { Review } from "./review.model";
 // };
 
 
+// const createTourReview = async (user: any, payload: any) => {
+//   // 1️⃣ Check booking validity
+//   const booking = await Booking.findOne({
+//     _id: payload.booking,
+//     user: user.userId,
+//     status: "COMPLETE",
+//   });
+
+//   if (!booking) throw new AppError(400, "You cannot review this tour");
+
+//   // 2️⃣ Prevent duplicate review
+//   const exists = await Review.findOne({
+//     booking: payload.booking,
+//     user: user.userId,
+//     tour: payload.tour,
+//   });
+
+//   if (exists) throw new AppError(400, "Already reviewed this tour");
+
+//   // 3️⃣ Create review
+//   const review = await Review.create({
+//     user: user.userId,
+//     targetType: "TOUR",
+//     ...payload,
+//   });
+
+//   // ⭐ 4️⃣ UPDATE TOUR RATING & COUNT
+//   const tourReviews = await Review.find({ tour: payload.tour });
+//   const avgRating =
+//     tourReviews.reduce((sum, r) => sum + r.rating, 0) / tourReviews.length;
+
+//   await Tour.findByIdAndUpdate(payload.tour, {
+//     averageRating: avgRating,
+//     totalReviews: tourReviews.length,
+//   });
+
+//   return review;
+// };
+
 const createTourReview = async (user: any, payload: any) => {
   // 1️⃣ Check booking validity
   const booking = await Booking.findOne({
@@ -84,7 +123,7 @@ const createTourReview = async (user: any, payload: any) => {
     ...payload,
   });
 
-  // ⭐ 4️⃣ UPDATE TOUR RATING & COUNT
+  // 4️⃣ UPDATE TOUR RATING & COUNT
   const tourReviews = await Review.find({ tour: payload.tour });
   const avgRating =
     tourReviews.reduce((sum, r) => sum + r.rating, 0) / tourReviews.length;
@@ -94,8 +133,16 @@ const createTourReview = async (user: any, payload: any) => {
     totalReviews: tourReviews.length,
   });
 
+  // ✅ 5️⃣ UPDATE BOOKING hasReview TO TRUE
+  await Booking.findByIdAndUpdate(
+    payload.booking,
+    { hasReview: true },
+    { runValidators: true }
+  );
+
   return review;
 };
+
 
 
 const createGuideReview = async (user: any, payload: any) => {
