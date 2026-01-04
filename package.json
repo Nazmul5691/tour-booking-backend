@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
+  "dependencies": {
     "@eslint/js": "^9.30.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -31,10 +31,8 @@
     "@types/passport-local": "^1.0.38",
     "@types/pdfkit": "^0.17.4",
     "eslint": "^9.30.1",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.36.0"
-  },
-  "dependencies": {
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.36.0",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.8.0",
