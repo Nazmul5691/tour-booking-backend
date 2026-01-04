@@ -6,6 +6,7 @@
     "start": "node ./dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
     "build": "tsc",
+    "postbuild": "copyfiles -u 1 \"src/app/utils/templates/**\" dist/",
     "lint": "npx eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -52,6 +53,7 @@
     "redis": "^5.8.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.36.0",
-    "zod": "^3.25.75"
+    "zod": "^3.25.75",
+    "copyfiles": "^2.4.1"
   }
 }
