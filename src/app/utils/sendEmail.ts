@@ -7,11 +7,11 @@ import path from 'path'
 import ejs from 'ejs'
 import fs from 'fs'
 
-// ✅ Use port 587 (Render compatible)
+// ✅ Port 587 use করুন (Render compatible)
 const transporter = nodeMailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    // secure: false, // true for 465, false for 587
+    port: 587, // ✅ Changed to 587
+    secure: false, // ✅ false for port 587
     auth: {
         user: envVars.EMAIL_SENDER.SMTP_USER,
         pass: envVars.EMAIL_SENDER.SMTP_PASS
@@ -19,7 +19,7 @@ const transporter = nodeMailer.createTransport({
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 30000, // 30 seconds
+    connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000
 })
@@ -55,20 +55,16 @@ export const sendEmail = async ({
 }: SendEmailOptions): Promise<boolean> => {
 
     try {
-        // Template path
         const templatePath = path.join(__dirname, 'templates', `${templateName}.ejs`)
         
-        // Check if template exists
         if (!fs.existsSync(templatePath)) {
             console.error(`❌ Template not found: ${templatePath}`);
             console.log(`🔍 Available files in templates:`, fs.readdirSync(path.join(__dirname, 'templates')));
             return false;
         }
 
-        // Render template
         const html = await ejs.renderFile(templatePath, templateData)
 
-        // Send email
         const info = await transporter.sendMail({
             from: `Tour Booking <${envVars.EMAIL_SENDER.SMTP_FROM}>`,
             to: to,
@@ -90,7 +86,6 @@ export const sendEmail = async ({
         console.error(`📛 Error code: ${error.code}`);
         console.error(`📛 Error message: ${error.message}`);
         
-        // Detailed error info
         if (error.code === 'ECONNECTION') {
             console.error('💡 Cannot connect to SMTP server');
         } else if (error.code === 'ETIMEDOUT') {
