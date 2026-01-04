@@ -1,38 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nodeMailer from 'nodemailer'
+import { Resend } from 'resend'
 import { envVars } from '../config/env'
 import path from 'path'
 import ejs from 'ejs'
 import fs from 'fs'
 
-// ✅ Port 587 use করুন (Render compatible)
-const transporter = nodeMailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587, // ✅ Changed to 587
-    secure: false, // ✅ false for port 587
-    auth: {
-        user: envVars.EMAIL_SENDER.SMTP_USER,
-        pass: envVars.EMAIL_SENDER.SMTP_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
-})
+// Initialize Resend
+const resend = new Resend(envVars.EMAIL_SENDER.RESEND_API_KEY)
 
-// Verify SMTP connection on startup
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('❌ SMTP Connection Error:', error.message);
-        console.error('Please check your email credentials');
-    } else {
-        console.log('✅ SMTP Server is ready to send emails');
-    }
-});
+console.log('✅ Resend email service is ready');
 
 interface SendEmailOptions {
     to: string,
@@ -55,48 +32,159 @@ export const sendEmail = async ({
 }: SendEmailOptions): Promise<boolean> => {
 
     try {
+        // Load email template
         const templatePath = path.join(__dirname, 'templates', `${templateName}.ejs`)
         
         if (!fs.existsSync(templatePath)) {
             console.error(`❌ Template not found: ${templatePath}`);
-            console.log(`🔍 Available files in templates:`, fs.readdirSync(path.join(__dirname, 'templates')));
             return false;
         }
 
         const html = await ejs.renderFile(templatePath, templateData)
 
-        const info = await transporter.sendMail({
-            from: `Tour Booking <${envVars.EMAIL_SENDER.SMTP_FROM}>`,
+        // Prepare email data
+        const emailData: any = {
+            from: 'Tour Booking <onboarding@resend.dev>',
             to: to,
             subject: subject,
             html: html,
-            attachments: attachments?.map(attachment => ({
-                filename: attachment.filename,
-                content: attachment.content,
-                contentType: attachment.contentType
-            }))
-        })
+        }
 
-        console.log(`✅ Email sent successfully to ${to}`);
-        console.log(`📧 Message ID: ${info.messageId}`);
+        // Add attachments if any
+        if (attachments && attachments.length > 0) {
+            emailData.attachments = attachments.map(attachment => ({
+                filename: attachment.filename,
+                content: Buffer.isBuffer(attachment.content) 
+                    ? attachment.content 
+                    : Buffer.from(attachment.content),
+            }))
+        }
+
+        // Send email
+        const { data, error } = await resend.emails.send(emailData)
+
+        if (error) {
+            console.error(`❌ Resend email failed to ${to}:`, error);
+            return false;
+        }
+
+        console.log(`✅ Email sent via Resend to ${to}`);
+        console.log(`📧 Email ID: ${data?.id}`);
         return true;
 
     } catch (error: any) {
         console.error(`❌ Email sending failed to ${to}`);
-        console.error(`📛 Error code: ${error.code}`);
-        console.error(`📛 Error message: ${error.message}`);
-        
-        if (error.code === 'ECONNECTION') {
-            console.error('💡 Cannot connect to SMTP server');
-        } else if (error.code === 'ETIMEDOUT') {
-            console.error('💡 Connection timeout - Check firewall/network');
-        } else if (error.code === 'EAUTH') {
-            console.error('💡 Authentication failed - Check email/password');
-        }
-        
+        console.error(`📛 Error:`, error.message);
         return false;
     }
 }
+
+
+
+
+
+
+
+
+// /* eslint-disable @typescript-eslint/no-unused-vars */
+// /* eslint-disable no-console */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// import nodeMailer from 'nodemailer'
+// import { envVars } from '../config/env'
+// import path from 'path'
+// import ejs from 'ejs'
+// import fs from 'fs'
+
+// // ✅ Port 587 use করুন (Render compatible)
+// const transporter = nodeMailer.createTransport({
+//     host: 'smtp.gmail.com',
+//     port: 587, // ✅ Changed to 587
+//     secure: false, // ✅ false for port 587
+//     auth: {
+//         user: envVars.EMAIL_SENDER.SMTP_USER,
+//         pass: envVars.EMAIL_SENDER.SMTP_PASS
+//     },
+//     tls: {
+//         rejectUnauthorized: false
+//     },
+//     connectionTimeout: 30000,
+//     greetingTimeout: 30000,
+//     socketTimeout: 30000
+// })
+
+// // Verify SMTP connection on startup
+// transporter.verify((error, success) => {
+//     if (error) {
+//         console.error('❌ SMTP Connection Error:', error.message);
+//         console.error('Please check your email credentials');
+//     } else {
+//         console.log('✅ SMTP Server is ready to send emails');
+//     }
+// });
+
+// interface SendEmailOptions {
+//     to: string,
+//     subject: string,
+//     templateName: string,
+//     templateData: Record<string, any>
+//     attachments?: {
+//         filename: string,
+//         content: Buffer | string,
+//         contentType: string
+//     }[]
+// }
+
+// export const sendEmail = async ({ 
+//     to, 
+//     subject, 
+//     templateName, 
+//     templateData, 
+//     attachments 
+// }: SendEmailOptions): Promise<boolean> => {
+
+//     try {
+//         const templatePath = path.join(__dirname, 'templates', `${templateName}.ejs`)
+        
+//         if (!fs.existsSync(templatePath)) {
+//             console.error(`❌ Template not found: ${templatePath}`);
+//             console.log(`🔍 Available files in templates:`, fs.readdirSync(path.join(__dirname, 'templates')));
+//             return false;
+//         }
+
+//         const html = await ejs.renderFile(templatePath, templateData)
+
+//         const info = await transporter.sendMail({
+//             from: `Tour Booking <${envVars.EMAIL_SENDER.SMTP_FROM}>`,
+//             to: to,
+//             subject: subject,
+//             html: html,
+//             attachments: attachments?.map(attachment => ({
+//                 filename: attachment.filename,
+//                 content: attachment.content,
+//                 contentType: attachment.contentType
+//             }))
+//         })
+
+//         console.log(`✅ Email sent successfully to ${to}`);
+//         console.log(`📧 Message ID: ${info.messageId}`);
+//         return true;
+
+//     } catch (error: any) {
+//         console.error(`❌ Email sending failed to ${to}`);
+//         console.error(`📛 Error code: ${error.code}`);
+//         console.error(`📛 Error message: ${error.message}`);
+        
+//         if (error.code === 'ECONNECTION') {
+//             console.error('💡 Cannot connect to SMTP server');
+//         } else if (error.code === 'ETIMEDOUT') {
+//             console.error('💡 Connection timeout - Check firewall/network');
+//         } else if (error.code === 'EAUTH') {
+//             console.error('💡 Authentication failed - Check email/password');
+//         }
+        
+//         return false;
+//     }
+// }
 
 
 
