@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { cloudinaryUpload } from "./cloudinary.config";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinaryUpload,
   params: {
-    public_id: (_req, file) => {
-      // Prefix with underscore since req is unused
+    public_id: (_req: any, file: Express.Multer.File) => {
       const fileName = file.originalname
         .toLowerCase()
         .replace(/\s+/g, "-")
@@ -26,7 +28,44 @@ const storage = new CloudinaryStorage({
   },
 });
 
-export const multerUpload = multer({ storage: storage });
+export const multerUpload = multer({ storage });
+
+
+
+
+
+
+
+
+// import multer from "multer";
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import { cloudinaryUpload } from "./cloudinary.config";
+
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinaryUpload,
+//   params: {
+//     public_id: (_req, file) => {
+//       // Prefix with underscore since req is unused
+//       const fileName = file.originalname
+//         .toLowerCase()
+//         .replace(/\s+/g, "-")
+//         .replace(/\./g, "-")
+//         // eslint-disable-next-line no-useless-escape
+//         .replace(/[^a-z0-9\-\.]/g, "");
+
+//       const uniqueFileName =
+//         Math.random().toString(36).substring(2) +
+//         "-" +
+//         Date.now() +
+//         "-" +
+//         fileName;
+
+//       return uniqueFileName;
+//     },
+//   },
+// });
+
+// export const multerUpload = multer({ storage: storage });
 
 
 
