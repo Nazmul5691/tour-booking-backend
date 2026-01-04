@@ -31,7 +31,8 @@ export const uploadBufferToCloudinary = async (buffer: Buffer, fileName: string)
                 {
                     resource_type: "auto",
                     public_id: public_id,
-                    folder: "pdf"
+                    folder: "pdf",
+                    async: true
                 },
                 (error, result) => {
                     if (error) {
