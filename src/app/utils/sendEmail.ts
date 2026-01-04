@@ -10,8 +10,8 @@ import fs from 'fs'
 // ✅ Use port 587 (Render compatible)
 const transporter = nodeMailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for 587
+    port: 465,
+    // secure: false, // true for 465, false for 587
     auth: {
         user: envVars.EMAIL_SENDER.SMTP_USER,
         pass: envVars.EMAIL_SENDER.SMTP_PASS
