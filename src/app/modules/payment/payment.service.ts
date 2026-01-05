@@ -226,19 +226,35 @@ const cancelPayment = async (query: Record<string, string>) => {
 };
 
 
+// const getInvoiceDownloadUrl = async (paymentId: string) => {
+//     const payment = await Payment.findById(paymentId)
+//         .select("invoiceUrl")
+
+//     if (!payment) {
+//         throw new AppError(401, "Payment not found")
+//     }
+
+//     if (!payment.invoiceUrl) {
+//         throw new AppError(401, "No invoice found")
+//     }
+
+//     return payment.invoiceUrl
+// };
+
+
+
 const getInvoiceDownloadUrl = async (paymentId: string) => {
-    const payment = await Payment.findById(paymentId)
-        .select("invoiceUrl")
+    const payment = await Payment.findById(paymentId).select("invoiceUrl");
 
     if (!payment) {
-        throw new AppError(401, "Payment not found")
+        throw new AppError(404, "Payment not found");
     }
 
     if (!payment.invoiceUrl) {
-        throw new AppError(401, "No invoice found")
+        throw new AppError(404, "No invoice found");
     }
 
-    return payment.invoiceUrl
+    return { invoiceUrl: payment.invoiceUrl };
 };
 
 
