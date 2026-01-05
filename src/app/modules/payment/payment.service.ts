@@ -57,10 +57,38 @@ const initPayment = async (bookingId: string) => {
 
 // Shared function to process successful payment and generate invoice
 const processSuccessfulPayment = async (transactionId: string) => {
+    console.log("🔵 [INVOICE] Starting processSuccessfulPayment for:", transactionId);
+    
     const session = await Booking.startSession();
     session.startTransaction();
 
     try {
+        // CRITICAL FIX: Check status BEFORE updating
+        console.log("🔵 [INVOICE] Checking payment status BEFORE update...");
+        const existingPayment = await Payment.findOne({ transactionId: transactionId }).session(session);
+
+        if (!existingPayment) {
+            console.log("❌ [INVOICE] Payment not found");
+            throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
+        }
+
+        console.log("✅ [INVOICE] Current payment status:", existingPayment.status);
+        console.log("✅ [INVOICE] Current invoiceUrl:", existingPayment.invoiceUrl || "NOT SET");
+
+        // If already fully processed (PAID + has invoice), skip
+        if (existingPayment.status === PAYMENT_STATUS.PAID && existingPayment.invoiceUrl) {
+            console.log("⚠️ [INVOICE] Payment already fully processed with invoice. Skipping.");
+            await session.commitTransaction();
+            session.endSession();
+            return {
+                success: true,
+                message: "Payment already processed",
+                bookingId: existingPayment.booking.toString()
+            };
+        }
+
+        // Now update payment to PAID
+        console.log("🔵 [INVOICE] Updating payment status to PAID...");
         const updatedPayment = await Payment.findOneAndUpdate(
             { transactionId: transactionId },
             { status: PAYMENT_STATUS.PAID },
@@ -68,21 +96,13 @@ const processSuccessfulPayment = async (transactionId: string) => {
         );
 
         if (!updatedPayment) {
-            throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
+            console.log("❌ [INVOICE] Failed to update payment");
+            throw new AppError(httpStatus.NOT_FOUND, "Failed to update payment");
         }
 
-        // Check if invoice already exists (avoid duplicate processing)
-        if (updatedPayment.invoiceUrl) {
-            console.log("Invoice already exists for transaction:", transactionId);
-            await session.commitTransaction();
-            session.endSession();
-            return {
-                success: true,
-                message: "Payment already processed",
-                bookingId: updatedPayment.booking.toString()
-            };
-        }
+        console.log("✅ [INVOICE] Payment updated to PAID");
 
+        console.log("🔵 [INVOICE] Finding and updating booking...");
         const updatedBooking = await Booking
             .findByIdAndUpdate(
                 updatedPayment.booking,
@@ -94,17 +114,21 @@ const processSuccessfulPayment = async (transactionId: string) => {
             .populate("guide");
 
         if (!updatedBooking) {
+            console.log("❌ [INVOICE] Booking not found");
             throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
         }
 
+        console.log("✅ [INVOICE] Booking updated to COMPLETE");
+
         // GUIDE WALLET UPDATE 
         if (updatedBooking.guide && updatedBooking.guideFee) {
+            console.log("🔵 [INVOICE] Updating guide wallet +", updatedBooking.guideFee);
             await Guide.findOneAndUpdate(
                 { user: updatedBooking.guide },
                 { $inc: { walletBalance: updatedBooking.guideFee } },
                 { session }
             );
-            console.log("Guide wallet updated +", updatedBooking.guideFee);
+            console.log("✅ [INVOICE] Guide wallet updated");
         }
 
         const invoiceData: IInvoiceData = {
@@ -116,26 +140,35 @@ const processSuccessfulPayment = async (transactionId: string) => {
             userName: (updatedBooking.user as unknown as IUser).name
         };
 
-        console.log("Generating PDF for transaction:", transactionId);
+        console.log("🔵 [INVOICE] Invoice data:", JSON.stringify(invoiceData));
+        console.log("🔵 [INVOICE] Generating PDF...");
+        
         const pdfBuffer = await generatePdf(invoiceData);
+        console.log("✅ [INVOICE] PDF generated. Size:", pdfBuffer.length, "bytes");
 
-        console.log("Uploading PDF to Cloudinary for transaction:", transactionId);
+        console.log("🔵 [INVOICE] Uploading to Cloudinary...");
         const cloudinaryResult = await uploadBufferToCloudinary(pdfBuffer, "invoice");
 
         if (!cloudinaryResult) {
-            throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Error uploading pdf");
+            console.log("❌ [INVOICE] Cloudinary upload failed");
+            throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Error uploading pdf to Cloudinary");
         }
 
-        console.log("PDF uploaded successfully:", cloudinaryResult.secure_url);
+        console.log("✅ [INVOICE] Uploaded to Cloudinary:", cloudinaryResult.secure_url);
 
-        await Payment.findByIdAndUpdate(
+        console.log("🔵 [INVOICE] Saving invoiceUrl to payment...");
+        const finalPayment = await Payment.findByIdAndUpdate(
             updatedPayment._id,
             { invoiceUrl: cloudinaryResult.secure_url },
-            { runValidators: true, session }
+            { runValidators: true, session, new: true }
         );
+
+        console.log("✅✅✅ [INVOICE] Invoice URL saved:", finalPayment?.invoiceUrl);
 
         await session.commitTransaction();
         session.endSession();
+
+        console.log("✅✅✅ [INVOICE] TRANSACTION COMMITTED - Invoice generation complete!");
 
         return {
             success: true,
@@ -143,16 +176,19 @@ const processSuccessfulPayment = async (transactionId: string) => {
             bookingId: updatedBooking._id.toString()
         };
 
-    } catch (error) {
+    } catch (error: any) {
         await session.abortTransaction();
         session.endSession();
-        console.error("Error in processSuccessfulPayment:", error);
+        console.error("❌❌❌ [INVOICE] ERROR in processSuccessfulPayment:");
+        console.error("Error:", error.message);
+        console.error("Stack:", error.stack);
         throw error;
     }
 };
 
 
 const successPayment = async (query: Record<string, string>) => {
+    console.log("🟢 [SUCCESS] Called with transaction:", query.transactionId);
     return await processSuccessfulPayment(query.transactionId);
 };
 
@@ -227,23 +263,6 @@ const cancelPayment = async (query: Record<string, string>) => {
 };
 
 
-// const getInvoiceDownloadUrl = async (paymentId: string) => {
-//     const payment = await Payment.findById(paymentId)
-//         .select("invoiceUrl")
-
-//     if (!payment) {
-//         throw new AppError(401, "Payment not found")
-//     }
-
-//     if (!payment.invoiceUrl) {
-//         throw new AppError(401, "No invoice found")
-//     }
-
-//     return payment.invoiceUrl
-// };
-
-
-
 const getInvoiceDownloadUrl = async (paymentId: string) => {
     const payment = await Payment.findById(paymentId).select("invoiceUrl");
 
@@ -259,38 +278,68 @@ const getInvoiceDownloadUrl = async (paymentId: string) => {
 };
 
 
-// NEW: Function to handle IPN validation and trigger invoice generation
+// Function to handle IPN validation and trigger invoice generation
 const validateAndProcessPayment = async (ipnData: any) => {
-    console.log("Processing IPN data:", ipnData);
+    console.log("🟣 [IPN] ========================================");
+    console.log("🟣 [IPN] NEW IPN RECEIVED");
+    console.log("🟣 [IPN] Transaction:", ipnData.tran_id);
+    console.log("🟣 [IPN] Status:", ipnData.status);
+    console.log("🟣 [IPN] Amount:", ipnData.amount);
+    console.log("🟣 [IPN] ========================================");
 
-    // Validate the payment with SSLCommerz (this just validates, doesn't return status)
-    await SSLService.validatePayment(ipnData);
+    try {
+        // Validate the payment with SSLCommerz
+        console.log("🟣 [IPN] Validating with SSLCommerz...");
+        await SSLService.validatePayment(ipnData);
+        console.log("✅ [IPN] Validation passed");
 
-    // Check the payment status from IPN data
-    if (ipnData.status === 'VALID' || ipnData.status === 'VALIDATED') {
-        // Check if payment is already processed
+        // Check the payment status from IPN data
+        if (ipnData.status !== 'VALID' && ipnData.status !== 'VALIDATED') {
+            console.log("❌ [IPN] Invalid status:", ipnData.status);
+            return { success: false, message: "Payment status is not VALID" };
+        }
+
+        console.log("✅ [IPN] Status is VALID");
+
+        // Find payment
+        console.log("🟣 [IPN] Finding payment in database...");
         const payment = await Payment.findOne({ transactionId: ipnData.tran_id });
 
         if (!payment) {
+            console.log("❌ [IPN] Payment not found");
             throw new AppError(httpStatus.NOT_FOUND, "Payment not found for transaction: " + ipnData.tran_id);
         }
 
-        // If payment is already PAID and has invoiceUrl, skip
-        if (payment.status === PAYMENT_STATUS.PAID && payment.invoiceUrl) {
-            console.log("Payment already processed with invoice:", ipnData.tran_id);
-            return { success: true, message: "Payment already processed" };
-        }
+        console.log("✅ [IPN] Payment found");
+        console.log("Current status:", payment.status);
+        console.log("Current invoiceUrl:", payment.invoiceUrl || "NOT SET");
 
-        // Update payment gateway data
+        // Update payment gateway data (always update this)
+        console.log("🟣 [IPN] Updating paymentGatewayData...");
         await Payment.findByIdAndUpdate(payment._id, {
             paymentGatewayData: ipnData
         });
+        console.log("✅ [IPN] Gateway data updated");
 
-        // Process the successful payment and generate invoice
-        return await processSuccessfulPayment(ipnData.tran_id);
+        // Check if already fully processed
+        if (payment.status === PAYMENT_STATUS.PAID && payment.invoiceUrl) {
+            console.log("⚠️ [IPN] Already processed with invoice. Skipping invoice generation.");
+            return { success: true, message: "Payment already processed" };
+        }
+
+        // Process payment and generate invoice
+        console.log("🟣 [IPN] Starting invoice generation...");
+        const result = await processSuccessfulPayment(ipnData.tran_id);
+        console.log("✅✅✅ [IPN] Invoice generation completed!");
+        
+        return result;
+
+    } catch (error: any) {
+        console.error("❌❌❌ [IPN] ERROR:");
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+        throw error;
     }
-
-    return { success: false, message: "Payment validation failed" };
 };
 
 
@@ -303,8 +352,6 @@ export const PaymentService = {
     getInvoiceDownloadUrl,
     validateAndProcessPayment
 };
-
-
 
 
 
