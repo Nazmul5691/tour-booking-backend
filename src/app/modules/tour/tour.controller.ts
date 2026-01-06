@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import { catchAsync } from '../../utils/catchAsync';
 import { sendResponse } from '../../utils/sendResponse';
@@ -7,17 +9,87 @@ import { ITour } from './tour.interface';
 
 
 // tour
-const createTour = catchAsync(async (req: Request, res: Response) => {
+// const createTour = catchAsync(async (req: Request, res: Response) => {
 
-    const payload: ITour = {
-        ...req.body,
-        images: (req.files as Express.Multer.File[]).map(file => file.path)
+//     const payload: ITour = {
+//         ...req.body,
+//         images: (req.files as Express.Multer.File[]).map(file => file.path)
+//     }
+
+//     //  console.log('Incoming request body:', req.body);
+
+//     // const result = await TourService.createTour(req.body);
+//     const result = await TourService.createTour(payload);
+//     sendResponse(res, {
+//         statusCode: 201,
+//         success: true,
+//         message: 'Tour created successfully',
+//         data: result,
+//     });
+// });
+
+const createTour = catchAsync(async (req: Request, res: Response) => {
+    let tourData: any = {};
+
+    // Check if data is sent as JSON string in 'data' field
+    if (req.body.data) {
+        try {
+            tourData = JSON.parse(req.body.data);
+        } catch (error) {
+            throw new Error("Invalid JSON data");
+        }
+    } else {
+        // Otherwise, parse individual fields (existing logic)
+        const parseArrayField = (field: any): string[] => {
+            if (!field) return [];
+            if (Array.isArray(field)) return field;
+            if (typeof field === 'string') {
+                try {
+                    const parsed = JSON.parse(field);
+                    return Array.isArray(parsed) ? parsed : [field];
+                } catch {
+                    return [field];
+                }
+            }
+            return [];
+        };
+
+        const parseNumber = (value: any): number | undefined => {
+            if (value === null || value === undefined || value === "") return undefined;
+            const num = Number(value);
+            return isNaN(num) ? undefined : num;
+        };
+
+        tourData = {
+            title: req.body.title,
+            description: req.body.description,
+            location: req.body.location,
+            costFrom: parseNumber(req.body.costFrom),
+            startDate: req.body.startDate,
+            endDate: req.body.endDate,
+            included: parseArrayField(req.body.included),
+            excluded: parseArrayField(req.body.excluded),
+            amenities: parseArrayField(req.body.amenities),
+            tourPlan: parseArrayField(req.body.tourPlan),
+            maxGuest: parseNumber(req.body.maxGuest),
+            minAge: parseNumber(req.body.minAge),
+            division: req.body.division,
+            tourType: req.body.tourType,
+            discountDate: req.body.discountDate,
+            discountPercentage: parseNumber(req.body.discountPercentage),
+            departureLocation: req.body.departureLocation,
+            arrivalLocation: req.body.arrivalLocation,
+        };
     }
 
-    //  console.log('Incoming request body:', req.body);
+    // Add images
+    const payload: ITour = {
+        ...tourData,
+        images: (req.files as Express.Multer.File[])?.map(file => file.path) || []
+    };
 
-    // const result = await TourService.createTour(req.body);
     const result = await TourService.createTour(payload);
+    
     sendResponse(res, {
         statusCode: 201,
         success: true,
