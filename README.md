@@ -30,30 +30,30 @@ control**, and **clean service-controller separation**.
 
 ## 🧱 Tech Stack
 
-  Layer             Technology
-  ----------------- -------------------------------
-  Backend           Node.js, Express.js
-  Language          TypeScript
-  Database          MongoDB + Mongoose
-  Authentication    JWT (Access & Refresh Tokens)
-  Authorization     Role-based Middleware
-  Validation        Zod
-  File Upload       Multer
-  Media Storage     Cloudinary
-  Payments          SSLCommerz
-  Security          bcrypt, cookie-parser
-  Template Engine   EJS
+    Layer             Technology
+    ----------------- -------------------------------
+    Backend           Node.js, Express.js
+    Language          TypeScript
+    Database          MongoDB + Mongoose
+    Authentication    JWT (Access & Refresh Tokens)
+    Authorization     Role-based Middleware
+    Validation        Zod
+    File Upload       Multer
+    Media Storage     Cloudinary
+    Payments          SSLCommerz
+    Security          bcrypt, cookie-parser
+    Template Engine   EJS
 
 ------------------------------------------------------------------------
 
 ## 👥 User Roles
 
-  Role          Description
-  ------------- --------------------------------------------------------
-  USER          Browse tours, book tours, apply as guide, review tours
-  GUIDE         Apply for tours, view guide stats & profile
-  ADMIN         Manage tours, divisions, guides, bookings, payments
-  SUPER_ADMIN   Full system control
+    Role          Description
+    ------------- --------------------------------------------------------
+    USER          Browse tours, book tours, apply as guide, review tours
+    GUIDE         Apply for tours, view guide stats & profile
+    ADMIN         Manage tours, divisions, guides, bookings, payments
+    SUPER_ADMIN   Full system control
 
 ------------------------------------------------------------------------
 
