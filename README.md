@@ -30,19 +30,22 @@ control**, and **clean service-controller separation**.
 
 ## 🧱 Tech Stack
 
-    Layer             Technology
-    ----------------- -------------------------------
-    Backend           Node.js, Express.js
-    Language          TypeScript
-    Database          MongoDB + Mongoose
-    Authentication    JWT (Access & Refresh Tokens)
-    Authorization     Role-based Middleware
-    Validation        Zod
-    File Upload       Multer
-    Media Storage     Cloudinary
-    Payments          SSLCommerz
-    Security          bcrypt, cookie-parser
-    Template Engine   EJS
+    +-------------------+-----------------------------------------------+
+| Layer             | Technology                                    |
++-------------------+-----------------------------------------------+
+| Backend           | Node.js, Express.js                            |
+| Language          | TypeScript                                     |
+| Database          | MongoDB + Mongoose                             |
+| Authentication    | JWT (Access & Refresh Tokens)                  |
+| Authorization     | Role-based Middleware                          |
+| Validation        | Zod                                            |
+| File Upload       | Multer                                         |
+| Media Storage     | Cloudinary                                     |
+| Payments          | SSLCommerz                                     |
+| Email / OTP       | SendGrid, Redis                                |
+| Security          | bcrypt, cookie-parser                          |
+| Template Engine   | EJS                                            |
++-------------------+-----------------------------------------------+
 
 ------------------------------------------------------------------------
 
