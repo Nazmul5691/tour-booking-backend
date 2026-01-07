@@ -110,7 +110,6 @@ src/
 | POST   | `/auth/refresh-token`   | Public        | Get new access token |
 | POST   | `/auth/logout`          | Authenticated | Logout               |
 | POST   | `/auth/change-password` | All roles     | Change password      |
-| POST   | `/auth/forgot-password` | Public        | Forgot password      |
 | POST   | `/auth/reset-password`  | Authenticated | Reset password       |
 
 ---
