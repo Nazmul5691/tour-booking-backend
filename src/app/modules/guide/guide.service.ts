@@ -364,7 +364,6 @@ const updateApplicationStatus = async (applicationId: string, status: "APPROVED"
 
 
 
-
 const getGuideStats = async (userId: string) => {
     const guide = await Guide.findOne({ user: userId });
 

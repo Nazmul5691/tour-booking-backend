@@ -63,7 +63,7 @@ const processSuccessfulPayment = async (transactionId: string) => {
     session.startTransaction();
 
     try {
-        // CRITICAL FIX: Check status BEFORE updating
+        // Check status BEFORE updating
         const existingPayment = await Payment.findOne({ transactionId: transactionId }).session(session);
 
         if (!existingPayment) {
@@ -104,7 +104,7 @@ const processSuccessfulPayment = async (transactionId: string) => {
             .populate("guide");
 
         if (!updatedBooking) {
-            console.log("❌ [INVOICE] Booking not found");
+            // console.log("❌ [INVOICE] Booking not found");
             throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
         }
 
@@ -250,7 +250,7 @@ const getInvoiceDownloadUrl = async (paymentId: string) => {
 };
 
 
-// Function to handle IPN validation and trigger invoice generation
+// handle IPN validation and trigger invoice generation
 const validateAndProcessPayment = async (ipnData: any) => {
 
     try {
@@ -272,8 +272,7 @@ const validateAndProcessPayment = async (ipnData: any) => {
 
         
 
-        // Update payment gateway data (always update this)
-        
+        // Update payment gateway data 
         await Payment.findByIdAndUpdate(payment._id, {
             paymentGatewayData: ipnData
         });

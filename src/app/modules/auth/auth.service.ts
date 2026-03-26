@@ -90,7 +90,6 @@ const changePassword = async (oldPassword: string, newPassword: string, decodedT
 }
 
 
-
 const setPassword = async (userId: string, plainPassword: string) => {
 
     const user = await User.findById(userId);

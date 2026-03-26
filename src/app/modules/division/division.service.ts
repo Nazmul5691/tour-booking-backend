@@ -51,7 +51,6 @@ const getSingleDivision = async (slug: string) => {
 };
 
 
-
 const updateDivision = async (id: string, payload: Partial<IDivision>) => {
 
     const existingDivision = await Division.findById(id);

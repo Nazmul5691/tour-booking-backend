@@ -133,7 +133,6 @@ const logout = catchAsync(async (req: Request, res: Response, next: NextFunction
 })
 
 
-
 const changePassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     const newPassword = req.body.newPassword;
@@ -212,7 +211,6 @@ const forgotPasswordReset = catchAsync(
 );
 
 
-
 const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     // const { newPassword, id } = req.body
@@ -227,7 +225,6 @@ const resetPassword = catchAsync(async (req: Request, res: Response, next: NextF
         data: null
     })
 })
-
 
 
 const googleCallbackController = catchAsync(async (req: Request, res: Response, next: NextFunction) => {

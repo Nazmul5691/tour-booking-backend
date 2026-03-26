@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+
 import { Request, Response } from "express";
 import { envVars } from "../../config/env";
 import { catchAsync } from "../../utils/catchAsync";
@@ -20,7 +20,6 @@ const initPayment = catchAsync(async (req: Request, res: Response) => {
         data: result
     })
 });
-
 
 
 const successPayment = catchAsync(async (req: Request, res: Response) => {
@@ -77,10 +76,9 @@ const getInvoiceDownloadUrl = catchAsync(async (req: Request, res: Response) => 
 );
 
 
-// UPDATED: This now processes the payment and generates invoice
 const validatePayment = catchAsync(async (req: Request, res: Response) => {
 
-    console.log("SSLCommerz IPN received:", req.body);
+    // console.log("SSLCommerz IPN received:", req.body);
 
     const result = await PaymentService.validateAndProcessPayment(req.body);
     

@@ -15,7 +15,6 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
             model: "anthropic/claude-3.5-sonnet",
             max_tokens: 1000,
             messages: [
-                // system prompt প্রথমে
                 ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
                 ...chatMessages,
             ],

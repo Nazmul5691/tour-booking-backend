@@ -137,7 +137,7 @@ export const updateUserStatus = catchAsync(
         const userId = req.params.id;
         const { isActive } = req.body;
 
-        const decodedToken = req.user; // set by checkAuth middleware
+        const decodedToken = req.user; 
 
         if (!decodedToken) {
             return sendResponse(res, {
@@ -148,7 +148,7 @@ export const updateUserStatus = catchAsync(
             });
         }
 
-        // Now TypeScript knows decodedToken exists
+        
         const updatedUser = await updateUserStatusService(
             userId,
             isActive,

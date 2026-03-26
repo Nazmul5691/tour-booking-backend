@@ -9,25 +9,6 @@ import { ITour } from './tour.interface';
 
 
 // tour
-// const createTour = catchAsync(async (req: Request, res: Response) => {
-
-//     const payload: ITour = {
-//         ...req.body,
-//         images: (req.files as Express.Multer.File[]).map(file => file.path)
-//     }
-
-//     //  console.log('Incoming request body:', req.body);
-
-//     // const result = await TourService.createTour(req.body);
-//     const result = await TourService.createTour(payload);
-//     sendResponse(res, {
-//         statusCode: 201,
-//         success: true,
-//         message: 'Tour created successfully',
-//         data: result,
-//     });
-// });
-
 const createTour = catchAsync(async (req: Request, res: Response) => {
     let tourData: any = {};
 
@@ -246,6 +227,9 @@ const deleteTourType = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+
+
+
 export const TourController = {
     createTour,
     createTourType,
@@ -259,3 +243,30 @@ export const TourController = {
     deleteTour,
     getSingleTourById
 };
+
+
+
+
+
+
+
+
+
+// const createTour = catchAsync(async (req: Request, res: Response) => {
+
+//     const payload: ITour = {
+//         ...req.body,
+//         images: (req.files as Express.Multer.File[]).map(file => file.path)
+//     }
+
+//     //  console.log('Incoming request body:', req.body);
+
+//     // const result = await TourService.createTour(req.body);
+//     const result = await TourService.createTour(payload);
+//     sendResponse(res, {
+//         statusCode: 201,
+//         success: true,
+//         message: 'Tour created successfully',
+//         data: result,
+//     });
+// });

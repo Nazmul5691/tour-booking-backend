@@ -45,7 +45,7 @@ const createTourReview = async (user: any, payload: any) => {
     totalReviews: tourReviews.length,
   });
 
-  
+
   await Booking.findByIdAndUpdate(
     payload.booking,
     { hasReview: true },
@@ -58,7 +58,7 @@ const createTourReview = async (user: any, payload: any) => {
 
 
 const createGuideReview = async (user: any, payload: any) => {
-  
+
   const booking = await Booking.findOne({
     _id: payload.booking,
     user: user.userId,
@@ -67,7 +67,7 @@ const createGuideReview = async (user: any, payload: any) => {
 
   if (!booking) throw new AppError(400, "You cannot review this guide");
 
-  
+
   const exists = await Review.findOne({
     booking: payload.booking,
     user: user.userId,
@@ -76,7 +76,7 @@ const createGuideReview = async (user: any, payload: any) => {
 
   if (exists) throw new AppError(400, "Already reviewed this guide");
 
-  
+
   const review = await Review.create({
     user: user.userId,
     targetType: "GUIDE",
@@ -84,7 +84,7 @@ const createGuideReview = async (user: any, payload: any) => {
   });
 
 
-  
+
   const guideReviews = await Review.find({ guide: payload.guide });
   const avgRating =
     guideReviews.reduce((sum, r) => sum + r.rating, 0) /
@@ -101,28 +101,28 @@ const createGuideReview = async (user: any, payload: any) => {
 
 const getAllGuideReviews = async (query: Record<string, string>) => {
 
-  
+
   const baseQuery = Review.find({ targetType: "GUIDE" })
     .populate("user", "name email")
-    .populate("guide", "user"); 
+    .populate("guide", "user");
 
   const queryBuilder = new QueryBuilder(baseQuery, query);
 
- 
+
   const reviewsQuery = queryBuilder
     // .search(reviewSearchableFields)
-    .filter() 
+    .filter()
     .sort()
     .fields()
     .paginate();
 
-  
+
   const [data, meta] = await Promise.all([
     reviewsQuery.build(),
     queryBuilder.getMeta()
   ]);
 
-  
+
   return {
     data,
     meta
@@ -132,32 +132,32 @@ const getAllGuideReviews = async (query: Record<string, string>) => {
 
 const getAllTourReviews = async (query: Record<string, string>) => {
 
-    
-    const baseQuery = Review.find({ targetType: "TOUR" }) 
-        .populate("user", "name email")
-        .populate("tour", "title slug"); 
 
-    const queryBuilder = new QueryBuilder(baseQuery, query);
+  const baseQuery = Review.find({ targetType: "TOUR" })
+    .populate("user", "name email")
+    .populate("tour", "title slug");
 
-    
-    const reviewsQuery = queryBuilder
-        // .search(reviewSearchableFields) 
-        .filter() 
-        .sort()
-        .fields()
-        .paginate();
+  const queryBuilder = new QueryBuilder(baseQuery, query);
 
-    
-    const [data, meta] = await Promise.all([
-        reviewsQuery.build(),
-        queryBuilder.getMeta()
-    ]);
-    
-   
-    return {
-        data,
-        meta
-    };
+
+  const reviewsQuery = queryBuilder
+    // .search(reviewSearchableFields) 
+    .filter()
+    .sort()
+    .fields()
+    .paginate();
+
+
+  const [data, meta] = await Promise.all([
+    reviewsQuery.build(),
+    queryBuilder.getMeta()
+  ]);
+
+
+  return {
+    data,
+    meta
+  };
 };
 
 
