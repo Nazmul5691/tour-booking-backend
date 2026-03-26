@@ -50,6 +50,7 @@ interface EnvConfig {
     REDIS_PORT: string;
     REDIS_USERNAME: string;
     REDIS_PASSWORD: string;
+    OPENROUTER_API_KEY: string;
 
 }
 
@@ -79,7 +80,8 @@ const loadEnvVariables = (): EnvConfig => {
         "REDIS_PORT",
         "REDIS_USERNAME",
         "REDIS_PASSWORD",
-        "SSL_IPN_URL"
+        "SSL_IPN_URL",
+        "OPENROUTER_API_KEY"
     ]
 
     requiredEnvVariables.forEach(key => {
@@ -134,6 +136,7 @@ const loadEnvVariables = (): EnvConfig => {
         REDIS_PORT: process.env.REDIS_PORT as string,
         REDIS_USERNAME: process.env.REDIS_USERNAME as string,
         REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
+        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY as string
 
     }
 }
