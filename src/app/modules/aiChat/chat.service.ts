@@ -1,7 +1,7 @@
 
 const chatWithAI = async (messages: { role: string; content: string }[]) => {
     
-    // system message আলাদা করুন
+    
     const systemMessage = messages.find((m) => m.role === "system");
     const chatMessages = messages.filter((m) => m.role !== "system");
 
