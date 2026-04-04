@@ -20,7 +20,7 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
         //     ],
         // }),
         body: JSON.stringify({
-            model: "qwen/qwen3.6-plus:free", // ✅ free model
+            model: "qwen/qwen3.6-plus:free", 
             max_tokens: 1000,
             messages: [
                 ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
