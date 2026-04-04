@@ -45,6 +45,14 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
             ship_country: "N/A",
         }
 
+         // ✅ এটা add করো
+        console.log("=== SSL DEBUG ===");
+        console.log("STORE_ID:", envVars.SSL.STORE_ID ? "EXISTS" : "MISSING");
+        console.log("STORE_PASS:", envVars.SSL.STORE_PASS ? "EXISTS" : "MISSING");
+        console.log("SSL_PAYMENT_API:", envVars.SSL.SSL_PAYMENT_API);
+        console.log("Amount:", payload.amount);
+        console.log("Phone:", payload.phone);
+        console.log("Address:", payload.address);
 
         const response = await axios({
             method: "POST",
@@ -52,6 +60,9 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
             data: data,
             headers: { "content-Type": "application/x-www-form-urlencoded" }
         })
+
+        console.log("=== SSL RESPONSE ===");
+        console.log(JSON.stringify(response.data));
 
 
         return response.data;

@@ -9,14 +9,14 @@ import httpStatus from 'http-status-codes';
 
 export const checkAuth = (...authRoles: string[]) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // ✅ দুই জায়গা থেকে token নাও
+        
         const rawToken = req.headers.authorization || req.cookies?.accessToken;
 
         if (!rawToken) {
             throw new AppError(403, "No token received");
         }
 
-        // ✅ Bearer prefix remove করো
+        
         const accessToken = rawToken.startsWith("Bearer ")
             ? rawToken.replace("Bearer ", "")
             : rawToken;
