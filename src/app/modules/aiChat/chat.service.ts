@@ -1,7 +1,7 @@
 
 const chatWithAI = async (messages: { role: string; content: string }[]) => {
-    
-    
+
+
     const systemMessage = messages.find((m) => m.role === "system");
     const chatMessages = messages.filter((m) => m.role !== "system");
 
@@ -11,8 +11,16 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
+        // body: JSON.stringify({
+        //     model: "anthropic/claude-3.5-sonnet",
+        //     max_tokens: 1000,
+        //     messages: [
+        //         ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
+        //         ...chatMessages,
+        //     ],
+        // }),
         body: JSON.stringify({
-            model: "anthropic/claude-3.5-sonnet",
+            model: "google/gemma-3-12b-it:free", // ✅ free model
             max_tokens: 1000,
             messages: [
                 ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
