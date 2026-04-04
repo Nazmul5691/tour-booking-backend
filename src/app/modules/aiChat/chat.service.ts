@@ -20,7 +20,7 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
         //     ],
         // }),
         body: JSON.stringify({
-            model: "google/gemma-3-12b-it:free", // ✅ free model
+            model: "qwen/qwen3-6b:free", // ✅ free model
             max_tokens: 1000,
             messages: [
                 ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
