@@ -22,7 +22,7 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
                 },
                 body: JSON.stringify({
                     model,
-                    max_tokens: 500,
+                    max_tokens: 400,
                     messages: [
                         ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
                         ...chatMessages,
