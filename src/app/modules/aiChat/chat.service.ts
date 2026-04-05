@@ -5,6 +5,7 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
     const chatMessages = messages.filter((m) => m.role !== "system");
 
     const models = [
+        "google/gemini-flash-1.5:free",
         "qwen/qwen3.6-plus:free",
         "nvidia/nemotron-3-super-120b-a12b:free",
         "meta-llama/llama-3.1-8b-instruct:free",
@@ -21,7 +22,7 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
                 },
                 body: JSON.stringify({
                     model,
-                    max_tokens: 1000,
+                    max_tokens: 500,
                     messages: [
                         ...(systemMessage ? [{ role: "system", content: systemMessage.content }] : []),
                         ...chatMessages,
@@ -31,12 +32,12 @@ const chatWithAI = async (messages: { role: string; content: string }[]) => {
 
             const data = await response.json();
 
-            // ✅ এই model কাজ করলে return করো
+           
             if (response.ok && data?.choices?.[0]?.message?.content) {
                 return data.choices[0].message.content;
             }
 
-            // ❌ কাজ না করলে পরের model try করো
+            
             console.log(`Model ${model} failed, trying next...`);
 
         } catch (error) {
